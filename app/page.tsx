@@ -26,7 +26,7 @@ export default function HomePage() {
           <Link className="brand" href="/" aria-label="Uncle Joe Computers home">
             <span className="brand-mark">UJ</span>
             <span><strong>UNCLE JOE</strong><small>COMPUTERS SHOPPING MALL</small></span>
-          </a>
+          </Link>
           <form className="search" action="/search">
             <label className="sr-only" htmlFor="q">Search products</label>
             <input id="q" name="q" placeholder="Search laptops, phones, accessories..." />
@@ -71,7 +71,7 @@ export default function HomePage() {
       <section id="categories" className="section container">
         <div className="section-heading"><div><span className="eyebrow">FIND YOUR NEXT ESSENTIAL</span><h2>Shop by category</h2></div><p>Everything you need to stay productive, connected and powered.</p></div>
         <div className="category-grid">
-          {categories.map((category) => <Link className="category-card" href={"/category/" + category.slug} key={category.title}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></a>)}
+          {categories.map((category) => <Link className="category-card" href={"/category/" + category.slug} key={category.title}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></Link>)}
         </div>
       </section>
 
