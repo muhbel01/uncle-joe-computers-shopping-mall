@@ -24,7 +24,8 @@ Migrations are stored in `supabase/migrations/`. The connected Supabase project 
 ## Current status
 - Public storefront, catalogue, category, search and product-detail routes are implemented.
 - Staff email/password login and server-side role checks are implemented; a real staff account still needs to be provisioned and end-to-end tested.
-- The staff product/inventory workspace supports product creation, draft/published status, low-stock thresholds, stock movements and a product register.
+- The staff product/inventory workspace supports product creation and editing, draft/published status, low-stock thresholds, stock movements, and a product register.
+- Managers can upload and remove JPG, PNG and WebP product images (maximum 5 MB each) through a role-restricted Supabase Storage bucket; published product images display in the storefront. Security advisor currently reports no findings.
 - No product inventory has been imported yet. The product list is intentionally empty until the real inventory sheet is supplied.
 - Checkout, order creation, Paystack, shipping calculations, image uploads, staff provisioning and WhatsApp support are not production-ready.
 
