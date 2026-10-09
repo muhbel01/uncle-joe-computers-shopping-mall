@@ -71,7 +71,6 @@ export async function createProduct(formData: FormData) {
     description: values.description || null,
     is_active: values.is_active,
     is_featured: values.is_featured,
-    stock_quantity: 0,
   });
   if (error) redirect("/admin/products?error=save-failed");
   revalidatePath("/products");
