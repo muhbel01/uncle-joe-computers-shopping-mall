@@ -79,6 +79,57 @@ export async function createProduct(formData: FormData) {
   redirect("/admin/products?notice=product-created");
 }
 
+
+export async function updateProduct(formData: FormData) {
+  const { supabase } = await requireStaff(["super_admin", "manager"]);
+  const id = z.string().uuid().safeParse(formData.get("id"));
+  if (!id.success) redirect("/admin/products?error=invalid-product");
+
+  const parsed = productSchema.safeParse({
+    name: formData.get("name"),
+    category_id: formData.get("category_id") || "",
+    sku: formData.get("sku") || "",
+    brand: formData.get("brand") || "",
+    condition: formData.get("condition"),
+    price: formData.get("price"),
+    compare_at_price: formData.get("compare_at_price") || "",
+    low_stock_threshold: formData.get("low_stock_threshold") || 3,
+    warranty_description: formData.get("warranty_description") || "",
+    short_description: formData.get("short_description") || "",
+    description: formData.get("description") || "",
+    is_active: formData.get("is_active") === "on",
+    is_featured: formData.get("is_featured") === "on",
+  });
+  if (!parsed.success) redirect("/admin/products?error=invalid-product");
+  const values = parsed.data;
+  const slug = slugify(values.name);
+  if (!slug) redirect("/admin/products?error=invalid-product");
+
+  const { data, error } = await supabase.from("products").update({
+    name: values.name,
+    slug,
+    category_id: values.category_id || null,
+    sku: values.sku || null,
+    brand: values.brand || null,
+    condition: values.condition,
+    price: values.price,
+    compare_at_price: values.compare_at_price ?? null,
+    low_stock_threshold: values.low_stock_threshold,
+    warranty_description: values.warranty_description || null,
+    short_description: values.short_description || null,
+    description: values.description || null,
+    is_active: values.is_active,
+    is_featured: values.is_featured,
+    updated_at: new Date().toISOString(),
+  }).eq("id", id.data).select("id").maybeSingle();
+  if (error || !data) redirect("/admin/products?error=update-failed");
+
+  revalidatePath("/products");
+  revalidatePath("/");
+  revalidatePath("/admin/products");
+  redirect("/admin/products?notice=product-updated");
+}
+
 export async function adjustStock(formData: FormData) {
   const { supabase } = await requireStaff(["super_admin", "manager", "inventory_staff"]);
   const parsed = stockSchema.safeParse({
