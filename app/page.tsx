@@ -71,12 +71,12 @@ export default function HomePage() {
       </section>
 
       <section id="featured" className="featured">
-        <div className="container featured-inner"><div><span className="eyebrow">COMING INTO FOCUS</span><h2>Good tech starts with the right advice.</h2><p>Our catalogue is being prepared. Soon you’ll be able to browse available stock, compare product conditions and place an order online.</p></div><div className="catalogue-placeholder"><span>✦</span><strong>Our product catalogue</strong><small>Products will appear here as inventory is added.</small></div></div>
+        <div className="container featured-inner"><div><span className="eyebrow">COMING INTO FOCUS</span><h2>Good tech starts with the right advice.</h2><p>Our catalogue is being prepared. Soon you&apos;ll be able to browse available stock, compare product conditions and place an order online.</p></div><div className="catalogue-placeholder"><span>✦</span><strong>Our product catalogue</strong><small>Products will appear here as inventory is added.</small></div></div>
       </section>
 
       <section id="why-us" className="section container">
         <div className="section-heading"><div><span className="eyebrow">THE UNCLE JOE DIFFERENCE</span><h2>Shop with confidence</h2></div></div>
-        <div className="why-grid"><article><span>01</span><h3>Know what you’re buying</h3><p>Product condition, specifications and available warranty will be clearly stated.</p></article><article><span>02</span><h3>Options that fit your budget</h3><p>Explore suitable new and used devices as stock becomes available.</p></article><article><span>03</span><h3>Support beyond checkout</h3><p>Get help with product selection, order updates and after-sales questions.</p></article></div>
+        <div className="why-grid"><article><span>01</span><h3>Know what you&apos;re buying</h3><p>Product condition, specifications and available warranty will be clearly stated.</p></article><article><span>02</span><h3>Options that fit your budget</h3><p>Explore suitable new and used devices as stock becomes available.</p></article><article><span>03</span><h3>Support beyond checkout</h3><p>Get help with product selection, order updates and after-sales questions.</p></article></div>
       </section>
 
       <footer id="contact" className="footer"><div className="container footer-inner"><div><a className="brand footer-brand" href="/"><span className="brand-mark">UJ</span><span><strong>UNCLE JOE</strong><small>COMPUTERS SHOPPING MALL</small></span></a><p>Your technology shopping partner in Osogbo, Osun State, Nigeria.</p></div><div><strong>Customer care</strong><p>Contact details and WhatsApp support will be added before launch.</p><small>Online checkout is not active yet.</small></div></div><div className="container copyright">© {new Date().getFullYear()} Uncle Joe Computers Shopping Mall. All rights reserved.</div></footer>
