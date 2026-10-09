@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const categories = [
   { icon: "💻", title: "Computers & Laptops", slug: "computers-laptops", text: "Work, school and business" },
   { icon: "📱", title: "Phones & Tablets", slug: "phones-tablets", text: "Stay connected" },
@@ -21,7 +23,7 @@ export default function HomePage() {
       </div>
       <header className="header">
         <div className="container header-inner">
-          <a className="brand" href="/" aria-label="Uncle Joe Computers home">
+          <Link className="brand" href="/" aria-label="Uncle Joe Computers home">
             <span className="brand-mark">UJ</span>
             <span><strong>UNCLE JOE</strong><small>COMPUTERS SHOPPING MALL</small></span>
           </a>
@@ -30,11 +32,11 @@ export default function HomePage() {
             <input id="q" name="q" placeholder="Search laptops, phones, accessories..." />
             <button type="submit">Search</button>
           </form>
-          <a className="cart" href="/cart">Cart <span>0</span></a>
+          <Link className="cart" href="/cart">Cart <span>0</span></Link>
         </div>
         <nav className="nav">
           <div className="container nav-inner">
-            <a href="/products">Shop all products</a><a href="#categories">Categories</a><a href="#featured">Featured</a><a href="#why-us">Why shop with us</a><a href="#contact">Contact</a>
+            <Link href="/products">Shop all products</Link><a href="#categories">Categories</a><a href="#featured">Featured</a><a href="#why-us">Why shop with us</a><a href="#contact">Contact</a>
           </div>
         </nav>
       </header>
@@ -69,7 +71,7 @@ export default function HomePage() {
       <section id="categories" className="section container">
         <div className="section-heading"><div><span className="eyebrow">FIND YOUR NEXT ESSENTIAL</span><h2>Shop by category</h2></div><p>Everything you need to stay productive, connected and powered.</p></div>
         <div className="category-grid">
-          {categories.map((category) => <a className="category-card" href={"/category/" + category.slug} key={category.title}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></a>)}
+          {categories.map((category) => <Link className="category-card" href={"/category/" + category.slug} key={category.title}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></a>)}
         </div>
       </section>
 
@@ -82,7 +84,7 @@ export default function HomePage() {
         <div className="why-grid"><article><span>01</span><h3>Know what you&apos;re buying</h3><p>Product condition, specifications and available warranty will be clearly stated.</p></article><article><span>02</span><h3>Options that fit your budget</h3><p>Explore suitable new and used devices as stock becomes available.</p></article><article><span>03</span><h3>Support beyond checkout</h3><p>Get help with product selection, order updates and after-sales questions.</p></article></div>
       </section>
 
-      <footer id="contact" className="footer"><div className="container footer-inner"><div><a className="brand footer-brand" href="/"><span className="brand-mark">UJ</span><span><strong>UNCLE JOE</strong><small>COMPUTERS SHOPPING MALL</small></span></a><p>Your technology shopping partner in Osogbo, Osun State, Nigeria.</p></div><div><strong>Customer care</strong><p>Contact details and WhatsApp support will be added before launch.</p><small>Online checkout is not active yet.</small></div></div><div className="container copyright">© {new Date().getFullYear()} Uncle Joe Computers Shopping Mall. All rights reserved.</div></footer>
+      <footer id="contact" className="footer"><div className="container footer-inner"><div><Link className="brand footer-brand" href="/"><span className="brand-mark">UJ</span><span><strong>UNCLE JOE</strong><small>COMPUTERS SHOPPING MALL</small></span></Link><p>Your technology shopping partner in Osogbo, Osun State, Nigeria.</p></div><div><strong>Customer care</strong><p>Contact details and WhatsApp support will be added before launch.</p><small>Online checkout is not active yet.</small></div></div><div className="container copyright">© {new Date().getFullYear()} Uncle Joe Computers Shopping Mall. All rights reserved.</div></footer>
     </main>
   );
 }
