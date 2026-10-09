@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/admin/require-staff";
 import { createProduct, updateProduct, adjustStock } from "./actions";
+import { ProductImageManager } from "@/components/admin/product-image-manager";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 });
@@ -76,7 +77,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       <div className="admin-panel-heading"><div><h2>Product register</h2><p className="panel-help">Showing up to 100 recently updated products.</p></div><span className="admin-count">{products?.length ?? 0} products</span></div>
       {(products?.length ?? 0) === 0 ? <p className="empty-state">No products have been imported or created yet. Upload the existing inventory sheet before entering real stock.</p> :
         <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Product</th><th>SKU / brand</th><th>Price</th><th>Stock</th><th>Status</th>{canManageProducts && <th>Actions</th>}</tr></thead>
-          <tbody>{products!.map(product => <tr key={product.id}><td><strong>{product.name}</strong><small>/{product.slug}</small></td><td>{product.sku || "—"}<small>{product.brand || product.condition}</small></td><td>{money.format(Number(product.price))}</td><td><strong>{product.stock_quantity}</strong><small>{product.stock_quantity <= product.low_stock_threshold ? "Low stock" : "In stock"}</small></td><td><span className={product.is_active ? "status-pill active" : "status-pill"}>{product.is_active ? "Published" : "Draft"}</span></td>{canManageProducts && <td><details className="admin-inline-edit"><summary>Edit</summary><form action={updateProduct} className="admin-edit-form">
+          <tbody>{products!.map(product => <tr key={product.id}><td><strong>{product.name}</strong><small>/{product.slug}</small></td><td>{product.sku || "—"}<small>{product.brand || product.condition}</small></td><td>{money.format(Number(product.price))}</td><td><strong>{product.stock_quantity}</strong><small>{product.stock_quantity <= product.low_stock_threshold ? "Low stock" : "In stock"}</small></td><td><span className={product.is_active ? "status-pill active" : "status-pill"}>{product.is_active ? "Published" : "Draft"}</span></td>{canManageProducts && <td><ProductImageManager productId={product.id} productName={product.name} /><details className="admin-inline-edit"><summary>Edit</summary><form action={updateProduct} className="admin-edit-form">
             <input type="hidden" name="id" value={product.id} />
             <label>Product name<input name="name" defaultValue={product.name} required minLength={2} maxLength={160} /></label>
             <label>Category<select name="category_id" defaultValue={product.category_id ?? ""}><option value="">Uncategorised</option>{(categories ?? []).map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
