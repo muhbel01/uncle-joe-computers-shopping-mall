@@ -1,10 +1,13 @@
 const categories = [
-  { icon: "💻", title: "Computers & Laptops", text: "Work, school and business" },
-  { icon: "📱", title: "Phones & Tablets", text: "Stay connected" },
-  { icon: "🖨️", title: "Printers & Office", text: "Tools for productivity" },
-  { icon: "🌐", title: "Networking & CCTV", text: "Connect and secure" },
-  { icon: "🎮", title: "Gaming & Entertainment", text: "Play and unwind" },
-  { icon: "🔋", title: "Power & Accessories", text: "Chargers, storage and more" },
+  { icon: "💻", title: "Computers & Laptops", slug: "computers-laptops", text: "Work, school and business" },
+  { icon: "📱", title: "Phones & Tablets", slug: "phones-tablets", text: "Stay connected" },
+  { icon: "🖨️", title: "Printers & Office", slug: "printers-office", text: "Tools for productivity" },
+  { icon: "⌨️", title: "Accessories", slug: "accessories", text: "Keyboards, mice and more" },
+  { icon: "🌐", title: "Networking", slug: "networking", text: "Connect your devices" },
+  { icon: "📹", title: "CCTV & Security", slug: "cctv-security", text: "Protect your space" },
+  { icon: "🎮", title: "Gaming & Entertainment", slug: "gaming-entertainment", text: "Play and unwind" },
+  { icon: "💾", title: "Storage & Memory", slug: "storage-memory", text: "Keep your data close" },
+  { icon: "🔋", title: "Power & Solar", slug: "power-solar", text: "Chargers, UPS and more" },
 ];
 
 export default function HomePage() {
@@ -31,7 +34,7 @@ export default function HomePage() {
         </div>
         <nav className="nav">
           <div className="container nav-inner">
-            <a href="#categories">Categories</a><a href="#featured">Featured</a><a href="#why-us">Why shop with us</a><a href="#contact">Contact</a>
+            <a href="/products">Shop all products</a><a href="#categories">Categories</a><a href="#featured">Featured</a><a href="#why-us">Why shop with us</a><a href="#contact">Contact</a>
           </div>
         </nav>
       </header>
@@ -66,7 +69,7 @@ export default function HomePage() {
       <section id="categories" className="section container">
         <div className="section-heading"><div><span className="eyebrow">FIND YOUR NEXT ESSENTIAL</span><h2>Shop by category</h2></div><p>Everything you need to stay productive, connected and powered.</p></div>
         <div className="category-grid">
-          {categories.map((category) => <a className="category-card" href={"/category/" + category.title.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-")} key={category.title}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></a>)}
+          {categories.map((category) => <a className="category-card" href={"/category/" + category.slug} key={category.title}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></a>)}
         </div>
       </section>
 
