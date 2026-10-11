@@ -16,6 +16,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const params = await searchParams;
   const canUseInventory = ["super_admin", "manager", "inventory_staff"].includes(staff.role);
   const canUseCRM = ["super_admin", "manager", "order_staff"].includes(staff.role);
+  const canUseCRM = ["super_admin", "manager", "order_staff"].includes(staff.role);
 
   return <main className="page-shell"><section className="container page-heading admin-dashboard">
     <Link href="/" className="back-link">← View shop</Link><span className="eyebrow">UNCLE JOE COMPUTERS · STAFF WORKSPACE</span>
@@ -25,6 +26,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     <div className="admin-work-grid">
       <article><span className="eyebrow">CATALOGUE</span><h2>Products & inventory</h2><p>Create product records, track stock levels and record restocks, returns, damage and corrections.</p>{canUseInventory ? <Link href="/admin/products" className="status-note">Open workspace →</Link> : <span className="status-note">Inventory access restricted</span>}</article>
       <article><span className="eyebrow">ORDERS</span><h2>Orders & fulfilment</h2><p>Order handling remains disabled until checkout, payment verification and fulfilment workflows are tested.</p><span className="status-note">Not enabled</span></article>
+      {canUseCRM && <article><span className="eyebrow">CUSTOMERS</span><h2>Customer CRM</h2><p>Track leads, customer details, staff ownership, conversation notes and follow-up dates in one workspace.</p><Link href="/admin/crm" className="status-note">Open CRM →</Link></article>}
       {canUseCRM && <article><span className="eyebrow">CUSTOMERS</span><h2>Customer CRM</h2><p>Track leads, customer details, staff ownership, conversation notes and follow-up dates in one workspace.</p><Link href="/admin/crm" className="status-note">Open CRM →</Link></article>}
       <article><span className="eyebrow">SECURITY</span><h2>Role-based access</h2><p>Server-side checks use the authenticated user and active staff role in the database.</p><span className="status-note">Role verified</span></article>
     </div>
