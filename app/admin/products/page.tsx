@@ -43,7 +43,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
     {params.error && errorText[params.error] && <p className="admin-flash error" role="alert">{errorText[params.error]}</p>}
 
     <div className="admin-stock-summary">
-      <article><small>Total products</small><strong>{products?.length ?? 0}</strong></article>
+      <article><small>Products shown</small><strong>{products?.length ?? 0}</strong></article>
       <article><small>Low stock</small><strong>{(products ?? []).filter(product => Number(product.stock_quantity) > 0 && Number(product.stock_quantity) <= Number(product.low_stock_threshold)).length}</strong></article>
       <article><small>Out of stock</small><strong>{(products ?? []).filter(product => Number(product.stock_quantity) === 0).length}</strong></article>
       <article><small>Published</small><strong>{(products ?? []).filter(product => product.is_active).length}</strong></article>
