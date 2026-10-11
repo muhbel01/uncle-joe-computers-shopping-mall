@@ -35,7 +35,7 @@ function slugify(value: string) {
 }
 
 export async function createProduct(formData: FormData) {
-  const { supabase } = await requireStaff(["super_admin", "manager"]);
+  const { supabase, role } = await requireStaff(["super_admin", "manager", "inventory_staff"]);
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
     category_id: formData.get("category_id") || "",
@@ -69,8 +69,8 @@ export async function createProduct(formData: FormData) {
     warranty_description: values.warranty_description || null,
     short_description: values.short_description || null,
     description: values.description || null,
-    is_active: values.is_active,
-    is_featured: values.is_featured,
+    is_active: role === "inventory_staff" ? false : values.is_active,
+    is_featured: role === "inventory_staff" ? false : values.is_featured,
   });
   if (error) redirect("/admin/products?error=save-failed");
   revalidatePath("/products");
