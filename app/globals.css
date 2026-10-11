@@ -65,3 +65,35 @@
 
 /* Product image uploads and public image presentation */
 .product-art-photo{padding:0;overflow:hidden;background:#f6f8fb}.product-art-photo img{display:block;width:100%;height:100%;object-fit:contain}.product-detail-photo{padding:0;overflow:hidden;background:#f6f8fb}.product-detail-photo img{display:block;width:100%;height:100%;max-height:560px;object-fit:contain}.product-image-manager{min-width:90px;margin-bottom:8px}.product-image-manager summary{cursor:pointer;color:var(--brand);font-size:11px;font-weight:800}.image-manager-content{min-width:280px;max-width:440px;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;white-space:normal}.product-image-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.product-image-thumb{width:112px;padding:5px;border:1px solid var(--line);border-radius:8px}.product-image-thumb img{display:block;width:100%;height:78px;object-fit:contain;background:#f6f8fb}.product-image-thumb button{width:100%;margin-top:5px;border:0;border-radius:5px;padding:5px;background:#fff0ef;color:#a22d27;font-size:10px;font-weight:700;cursor:pointer}.product-image-thumb button:disabled,.image-upload-form button:disabled{opacity:.6;cursor:wait}.image-upload-form{display:grid;gap:9px}.image-upload-form label{display:grid;gap:7px;font-size:11px;font-weight:700}.image-upload-form input{width:100%;min-width:0;font-size:11px}.image-upload-form button{justify-self:start;border:0;border-radius:7px;padding:9px 12px;background:var(--brand);color:#fff;font-size:11px;font-weight:800;cursor:pointer}.image-manager-success,.image-manager-error{font-size:11px;line-height:1.5;margin:9px 0 0}.image-manager-success{color:#177245}.image-manager-error{color:#a22d27}
+
+
+/* Inventory summary and CRM */
+.admin-stock-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}
+.admin-stock-summary article{padding:16px;border:1px solid var(--line);border-radius:12px;background:#f8fbff}
+.admin-stock-summary small,.admin-stock-summary strong{display:block}
+.admin-stock-summary small{font-size:11px;color:var(--muted)}
+.admin-stock-summary strong{font-size:26px;margin-top:8px;letter-spacing:-.04em}
+.crm-filter-form{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:15px 0 20px}
+.crm-filter-form label{display:grid;gap:6px;min-width:190px;flex:1;font-size:11px;font-weight:700}
+.crm-filter-form input,.crm-filter-form select,.crm-inline-form input,.crm-inline-form select,.crm-inline-form textarea{width:100%;min-width:0;border:1px solid #dce3ee;border-radius:8px;padding:10px 11px;background:white;color:var(--ink);font:inherit;font-size:12px}
+.crm-clear{font-size:12px;font-weight:700;color:var(--brand);padding:12px 4px}
+.crm-customer-list{display:grid;gap:14px}
+.crm-customer-card{padding:18px;border:1px solid var(--line);border-radius:13px;background:#fff}
+.crm-customer-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.crm-customer-head h3{margin:9px 0 5px;font-size:17px}
+.crm-customer-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.crm-customer-head>small{color:var(--muted);font-size:10px;white-space:nowrap}
+.crm-customer-meta{display:flex;flex-wrap:wrap;gap:8px 16px;margin:16px 0;color:#56647a;font-size:10px}
+.crm-customer-meta strong{color:#8c4a11}
+.crm-notes{padding:10px 12px;border-radius:8px;background:#f8fafc;font-size:12px;line-height:1.6}
+.crm-details{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.crm-details summary{cursor:pointer;color:var(--brand);font-size:12px;font-weight:800}
+.crm-inline-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.crm-inline-form label{display:grid;gap:6px;font-size:11px;font-weight:700}
+.crm-inline-form .admin-submit{align-self:end}
+.crm-timeline{margin-top:16px;padding:14px;border-radius:10px;background:#f8fafc}
+.crm-timeline>strong{font-size:11px}
+.crm-timeline>div{padding:10px 0;border-top:1px solid var(--line);margin-top:8px}
+.crm-timeline small{font-size:10px;color:var(--muted)}
+.crm-timeline p{margin:6px 0;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+@media(max-width:760px){.admin-stock-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-stock-summary article{padding:12px}.admin-stock-summary strong{font-size:22px}.crm-customer-card{padding:14px}.crm-customer-head{display:block}.crm-customer-head>small{display:block;margin-top:10px}.crm-inline-form{grid-template-columns:1fr}.crm-filter-form label{min-width:100%}.crm-filter-form .admin-submit{width:100%}}
