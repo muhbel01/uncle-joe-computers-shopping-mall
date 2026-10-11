@@ -46,7 +46,7 @@ where u.id = 'REPLACE_WITH_AUTH_USER_UUID'::uuid;
 
 - `super_admin`: full authorised administration.
 - `manager`: manage catalogue and product images, plus permitted management functions.
-- `inventory_staff`: record stock movements and view inventory; cannot manage product details.
+- `inventory_staff`: add product drafts, record stock movements and view inventory; cannot publish products or edit/publish manager-controlled catalogue details.
 - `order_staff`: reserved for order operations when those features are implemented.
 
 ## Security requirements
