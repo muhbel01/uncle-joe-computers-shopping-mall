@@ -15,6 +15,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const { supabase, user, role } = await requireStaff(["super_admin", "manager", "inventory_staff"]);
   const params = await searchParams;
   const canManageProducts = role === "super_admin" || role === "manager";
+  const canCreateProducts = canManageProducts || role === "inventory_staff";
   const [{ data: products }, { data: categories }] = await Promise.all([
     supabase.from("products").select("id,name,slug,category_id,sku,brand,condition,price,compare_at_price,stock_quantity,low_stock_threshold,warranty_description,short_description,description,is_active,is_featured")
       .order("updated_at", { ascending: false }).limit(100),
@@ -41,8 +42,15 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
     {params.notice && noticeText[params.notice] && <p className="admin-flash success" role="status">{noticeText[params.notice]}</p>}
     {params.error && errorText[params.error] && <p className="admin-flash error" role="alert">{errorText[params.error]}</p>}
 
-    {canManageProducts && <section className="admin-panel">
-      <h2>Add a product</h2><p className="panel-help">New products are hidden from customers unless you select “Publish product”. Initial stock is entered separately below.</p>
+    <div className="admin-stock-summary">
+      <article><small>Total products</small><strong>{products?.length ?? 0}</strong></article>
+      <article><small>Low stock</small><strong>{(products ?? []).filter(product => Number(product.stock_quantity) > 0 && Number(product.stock_quantity) <= Number(product.low_stock_threshold)).length}</strong></article>
+      <article><small>Out of stock</small><strong>{(products ?? []).filter(product => Number(product.stock_quantity) === 0).length}</strong></article>
+      <article><small>Published</small><strong>{(products ?? []).filter(product => product.is_active).length}</strong></article>
+    </div>
+
+    {canCreateProducts && <section className="admin-panel">
+      <h2>Add a product</h2><p className="panel-help">{canManageProducts ? "New products stay hidden unless you choose Publish product. Record opening stock separately." : "Inventory staff can submit new products as drafts. A manager must review prices and publish them. Record opening stock separately."}</p>
       <form action={createProduct} className="admin-data-form">
         <label>Product name<input name="name" required minLength={2} maxLength={160} /></label>
         <label>Category<select name="category_id" defaultValue=""><option value="">Uncategorised</option>{(categories ?? []).map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
@@ -55,9 +63,9 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         <label>Warranty<input name="warranty_description" maxLength={500} placeholder="e.g. 6 months, supplier warranty" /></label>
         <label className="span-two">Short description<input name="short_description" maxLength={240} /></label>
         <label className="span-two">Full description<textarea name="description" rows={3} maxLength={5000} /></label>
-        <label className="check-label"><input name="is_active" type="checkbox" /> Publish product</label>
-        <label className="check-label"><input name="is_featured" type="checkbox" /> Feature on shop</label>
-        <button className="admin-submit" type="submit">Save product</button>
+        {canManageProducts && <><label className="check-label"><input name="is_active" type="checkbox" /> Publish product</label>
+        <label className="check-label"><input name="is_featured" type="checkbox" /> Feature on shop</label></>}
+        <button className="admin-submit" type="submit">Save {canManageProducts ? "product" : "draft for review"}</button>
       </form>
     </section>}
 
