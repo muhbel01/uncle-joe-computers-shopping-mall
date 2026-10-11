@@ -46,11 +46,11 @@ This guide prepares the shop's existing stock list for a controlled catalogue im
 1. Reconcile the spreadsheet against a physical stock count and confirm the selling price with the owner.
 2. Check duplicate SKUs and near-duplicate product names.
 3. Review used/refurbished condition, warranty, and return eligibility for each item.
-4. Create products through the admin product form. Product creation starts stock at zero.
-5. Set opening stock through the admin stock-adjustment workflow so each opening quantity creates an inventory movement and audit entry. Do not update `products.stock_quantity` directly or bulk-write stock through SQL.
-6. Upload and verify product images through the admin image manager.
-7. Test the product page and catalogue while products remain inactive; publish only after review.
+4. Upload the reviewed CSV from **Admin → Products & inventory → Import inventory from CSV**. The importer accepts up to 250 rows and 900 KB per file. Required headers: `name`, `condition`, `price_ngn`, and `opening_stock`.
+5. The importer creates every product as an unpublished draft, regardless of CSV `is_active` or `is_featured` values. Valid opening stock is recorded through the audited `adjust_inventory` workflow; never write `products.stock_quantity` directly.
+6. Review the import summary. Fix skipped rows and investigate any opening-stock adjustment errors before continuing. Duplicate SKUs within the file and invalid rows are skipped; existing unique-constraint conflicts are also skipped.
+7. Upload and verify product images through the admin image manager, test the product page, and publish only after the product details, price, condition, stock, warranty and photo have been checked.
 
 ## Current limitations
 
-This CSV is a preparation template, not an automated import endpoint. No bulk import should be attempted until a validated import tool exists and its permissions, duplicate handling, and inventory audit trail have been tested. Online checkout and payments remain disabled until their separate implementation and end-to-end checks are complete.
+The importer creates draft products and records opening stock, but does not upload images or publish products. Run a controlled test with a small, reviewed CSV first and reconcile the resulting stock ledger before a full import. Online checkout and payments remain disabled until their separate implementation and end-to-end checks are complete.
