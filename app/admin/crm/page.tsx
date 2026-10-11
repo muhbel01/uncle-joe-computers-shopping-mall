@@ -8,9 +8,8 @@ const stages = ["lead", "prospect", "customer", "repeat_customer", "inactive"] a
 const types = ["retail", "business", "wholesale", "corporate"] as const;
 
 export default async function AdminCrmPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string; q?: string; stage?: string }> }) {
-  const { supabase, user, role } = await requireStaff(["super_admin", "manager", "order_staff"]);
+  const { supabase, user } = await requireStaff(["super_admin", "manager", "order_staff"]);
   const params = await searchParams;
-  const canManageStaff = role === "super_admin" || role === "manager";
   const [{ data: customers }, { data: staff }] = await Promise.all([
     supabase.from("crm_customers").select("id,full_name,phone,email,company,customer_type,lifecycle_stage,source,preferred_contact,city,state,assigned_to,next_follow_up_at,last_contacted_at,internal_notes,created_at").order("next_follow_up_at", { ascending: true, nullsFirst: false }).limit(200),
     supabase.from("staff_members").select("user_id,role").eq("is_active", true).in("role", ["super_admin", "manager", "order_staff"]),
