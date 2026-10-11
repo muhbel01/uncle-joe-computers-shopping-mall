@@ -37,7 +37,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   return <main className="page-shell"><section className="container page-heading admin-products">
     <Link href="/admin" className="back-link">← Admin dashboard</Link>
     <span className="eyebrow">CATALOGUE · INVENTORY</span>
-    <h1>Products & inventory</h1>
+    <h1>Products & inventory</h1><p><Link href="/admin/products/import" className="back-link">Import inventory from CSV →</Link></p>
     <p>Signed in as {user.email ?? "authorised staff"} · {roleLabels[role]}. Product prices are in NGN. Stock adjustments are recorded with an actor, reason and previous/new stock values.</p>
     {params.notice && noticeText[params.notice] && <p className="admin-flash success" role="status">{noticeText[params.notice]}</p>}
     {params.error && errorText[params.error] && <p className="admin-flash error" role="alert">{errorText[params.error]}</p>}
