@@ -38,10 +38,10 @@ export default async function AdminCrmPage({ searchParams }: { searchParams: Pro
     {notice && <p className="admin-flash success" role="status">{notice}</p>}
     {error && <p className="admin-flash error" role="alert">{error}</p>}
     <div className="admin-stock-summary">
-      <article><small>All contacts</small><strong>{customers?.length ?? 0}</strong></article>
+      <article><small>Contacts loaded</small><strong>{customers?.length ?? 0}</strong></article>
       <article><small>Leads</small><strong>{(customers ?? []).filter(c => c.lifecycle_stage === "lead" || c.lifecycle_stage === "prospect").length}</strong></article>
       <article><small>Customers</small><strong>{(customers ?? []).filter(c => c.lifecycle_stage === "customer" || c.lifecycle_stage === "repeat_customer").length}</strong></article>
-      <article><small>Follow-ups due</small><strong>{(customers ?? []).filter(c => c.next_follow_up_at && new Date(c.next_follow_up_at).getTime() <= Date.now()).length}</strong></article>
+      <article><small>Follow-ups due (loaded)</small><strong>{(customers ?? []).filter(c => c.next_follow_up_at && new Date(c.next_follow_up_at).getTime() <= Date.now()).length}</strong></article>
     </div>
     <section className="admin-panel">
       <h2>Add customer or sales lead</h2><p className="panel-help">Record only useful business contact details. Do not store payment card data, passwords or sensitive personal information.</p>
