@@ -34,7 +34,12 @@ export async function createCustomer(formData: FormData) {
   });
   if (!parsed.success) redirect("/admin/crm?error=invalid-customer");
   const v = parsed.data;
-  const followUp = v.next_follow_up_at ? new Date(v.next_follow_up_at).toISOString() : null;
+  let followUp: string | null = null;
+  if (v.next_follow_up_at) {
+    const date = new Date(v.next_follow_up_at);
+    if (Number.isNaN(date.getTime())) redirect("/admin/crm?error=invalid-customer");
+    followUp = date.toISOString();
+  }
   const { error } = await supabase.from("crm_customers").insert({
     full_name: v.full_name, phone: v.phone || null, email: v.email || null,
     company: v.company || null, customer_type: v.customer_type, lifecycle_stage: v.lifecycle_stage,
