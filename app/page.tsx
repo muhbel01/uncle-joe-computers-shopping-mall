@@ -10,6 +10,7 @@ const categories = [
   { icon: "🎮", title: "Gaming & Entertainment", slug: "gaming-entertainment", text: "Play and unwind" },
   { icon: "💾", title: "Storage & Memory", slug: "storage-memory", text: "Keep your data close" },
   { icon: "🔋", title: "Power & Solar", slug: "power-solar", text: "Chargers, UPS and more" },
+  { icon: "🏠", title: "Smart Home", slug: "smart-home", text: "Connected living and automation" },
 ];
 
 export default function HomePage() {
