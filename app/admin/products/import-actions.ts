@@ -73,7 +73,9 @@ export async function importProductsCsv(formData: FormData) {
   let stockErrors = 0;
 
   for (let index = 1; index < rows.length; index++) {
-    const raw = Object.fromEntries(headers.map((header, col) => [header, rows[index][col] ?? ""]));
+    // Reject rows with missing or extra cells instead of silently dropping or misaligning data.
+    if (rows[index].length !== headers.length) { skipped++; continue; }
+    const raw = Object.fromEntries(headers.map((header, col) => [header, rows[index][col]]));
     const parsed = rowSchema.safeParse(raw);
     if (!parsed.success) { skipped++; continue; }
     const value = parsed.data;
