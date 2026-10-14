@@ -29,23 +29,55 @@ function parseCsv(input: string): string[][] {
   let row: string[] = [];
   let field = "";
   let quoted = false;
+  let afterQuote = false;
+
+  const finishField = () => {
+    row.push(field.trim());
+    field = "";
+    afterQuote = false;
+  };
+  const finishRow = () => {
+    finishField();
+    if (row.some(value => value.length > 0)) rows.push(row);
+    row = [];
+  };
+
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
     if (quoted) {
       if (char === '"' && input[i + 1] === '"') { field += '"'; i++; }
-      else if (char === '"') quoted = false;
+      else if (char === '"') { quoted = false; afterQuote = true; }
       else field += char;
-    } else if (char === '"' && field.length === 0) quoted = true;
-    else if (char === ",") { row.push(field.trim()); field = ""; }
-    else if (char.charCodeAt(0) === 10 || char.charCodeAt(0) === 13) {
-      if (char.charCodeAt(0) === 13 && input[i + 1]?.charCodeAt(0) === 10) i++;
-      row.push(field.trim()); field = "";
-      if (row.some(value => value.length > 0)) rows.push(row);
-      row = [];
+      continue;
+    }
+
+    if (afterQuote) {
+      if (char === ",") finishField();
+      else if (char === "\n" || char === "\r") {
+        if (char === "\r" && input[i + 1] === "\n") i++;
+        finishRow();
+      } else if (!/\s/.test(char)) {
+        throw new Error("Unexpected character after a quoted field");
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      if (field.trim().length !== 0) throw new Error("Quote inside an unquoted field");
+      field = "";
+      quoted = true;
+    } else if (char === ",") finishField();
+    else if (char === "\n" || char === "\r") {
+      if (char === "\r" && input[i + 1] === "\n") i++;
+      finishRow();
     } else field += char;
   }
+
   if (quoted) throw new Error("Unclosed quoted field");
-  if (field.length || row.length) { row.push(field.trim()); if (row.some(value => value.length > 0)) rows.push(row); }
+  if (field.length || row.length || afterQuote) {
+    finishField();
+    if (row.some(value => value.length > 0)) rows.push(row);
+  }
   return rows;
 }
 
