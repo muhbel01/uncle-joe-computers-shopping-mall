@@ -30,8 +30,33 @@ const stockSchema = z.object({
 });
 
 function slugify(value: string) {
-  return value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+  return value.toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 150);
+}
+
+type AdminSupabase = Awaited<ReturnType<typeof requireStaff>>["supabase"];
+
+async function uniqueProductSlug(
+  supabase: AdminSupabase,
+  name: string,
+  sku?: string,
+  excludeId?: string,
+): Promise<string | null> {
+  const base = slugify(name);
+  if (!base) return null;
+  const skuSuffix = sku ? slugify(sku).slice(0, 40) : "";
+  const root = skuSuffix ? `${base.slice(0, 105)}-${skuSuffix}` : base;
+
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const suffix = attempt === 0 ? "" : `-${attempt + 1}`;
+    const candidate = `${root.slice(0, 150 - suffix.length)}${suffix}`;
+    let query = supabase.from("products").select("id").eq("slug", candidate);
+    if (excludeId) query = query.neq("id", excludeId);
+    const { data, error } = await query.maybeSingle();
+    if (error) return null;
+    if (!data) return candidate;
+  }
+  return null;
 }
 
 export async function createProduct(formData: FormData) {
@@ -53,8 +78,8 @@ export async function createProduct(formData: FormData) {
   });
   if (!parsed.success) redirect("/admin/products?error=invalid-product");
   const values = parsed.data;
-  const slug = slugify(values.name);
-  if (!slug) redirect("/admin/products?error=invalid-product");
+  const slug = await uniqueProductSlug(supabase, values.name, values.sku);
+  if (!slug) redirect("/admin/products?error=save-failed");
 
   const { error } = await supabase.from("products").insert({
     name: values.name,
@@ -102,8 +127,8 @@ export async function updateProduct(formData: FormData) {
   });
   if (!parsed.success) redirect("/admin/products?error=invalid-product");
   const values = parsed.data;
-  const slug = slugify(values.name);
-  if (!slug) redirect("/admin/products?error=invalid-product");
+  const slug = await uniqueProductSlug(supabase, values.name, values.sku, id.data);
+  if (!slug) redirect("/admin/products?error=save-failed");
 
   const { data, error } = await supabase.from("products").update({
     name: values.name,
