@@ -37,7 +37,7 @@ export default function HomePage() {
         </div>
         <nav className="nav">
           <div className="container nav-inner">
-            <Link href="/products">Shop all products</Link><a href="#categories">Categories</a><a href="#featured">Featured</a><a href="#why-us">Why shop with us</a><a href="#contact">Contact</a>
+            <Link href="/products">Shop all products</Link><a href="#categories">Categories</a><a href="#featured">Featured</a><Link href="/guides">Tech guides</Link><a href="#membership">Membership</a><a href="#why-us">Why shop with us</a><a href="#contact">Contact</a>
           </div>
         </nav>
       </header>
