@@ -1,25 +1,27 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl =
+const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://uncle-joe-computers-shopping-mall-6.vercel.app";
+  "https://uncle-joe-computers-shopping-mall-6.vercel.app"
+).replace(/\/$/, "");
 
+// Keep this list aligned with the active category slugs in Supabase.
 const categorySlugs = [
-  "computers-laptops",
-  "phones-tablets",
-  "printers-office",
   "accessories",
-  "networking",
   "cctv-security",
+  "computers-laptops",
   "gaming-entertainment",
-  "storage-memory",
+  "networking",
+  "phones-tablets",
   "power-solar",
+  "printers-office",
   "smart-home",
+  "storage-memory",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const publicPages: MetadataRoute.Sitemap = [
+  return [
     { url: siteUrl, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/products`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${siteUrl}/guides`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
@@ -30,6 +32,4 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     })),
   ];
-
-  return publicPages;
 }
