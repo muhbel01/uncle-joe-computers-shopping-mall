@@ -97,3 +97,20 @@
 .crm-timeline small{font-size:10px;color:var(--muted)}
 .crm-timeline p{margin:6px 0;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
 @media(max-width:760px){.admin-stock-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-stock-summary article{padding:12px}.admin-stock-summary strong{font-size:22px}.crm-customer-card{padding:14px}.crm-customer-head{display:block}.crm-customer-head>small{display:block;margin-top:10px}.crm-inline-form{grid-template-columns:1fr}.crm-filter-form label{min-width:100%}.crm-filter-form .admin-submit{width:100%}}
+
+/* Shopping journey and membership preview */
+.steps-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:28px}
+.steps-grid article{position:relative;padding:24px 20px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(160deg,#fff,#f7fbff);box-shadow:0 8px 24px rgba(16,35,63,.045)}
+.steps-grid article>span{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#e8f4ff;color:var(--brand);font-size:12px;font-weight:900}
+.steps-grid h3{margin:18px 0 8px;font-size:17px}
+.steps-grid p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}
+.membership-band{position:relative;overflow:hidden;margin:18px 0 36px;background:radial-gradient(ellipse at 90% 20%,rgba(0,195,130,.25),transparent 35%),linear-gradient(120deg,#09213c,#0b3760 70%,#075d53);color:white}
+.membership-content{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px;padding-block:38px}
+.membership-crown{display:grid;place-items:center;width:76px;height:76px;border:1px solid rgba(255,255,255,.22);border-radius:24px;background:rgba(255,255,255,.08);font-size:34px;color:#8cf2c1}
+.membership-content .eyebrow{color:#8cf2c1}
+.membership-content h2{margin:9px 0;font-size:clamp(24px,3vw,34px);letter-spacing:-.03em}
+.membership-content p{max-width:670px;margin:0;color:#d6e5f3;font-size:14px;line-height:1.8}
+.button.light{white-space:nowrap;background:#fff;color:#0b3150;border:1px solid #fff}
+.button.light:hover{background:#eafff5}
+@media(max-width:800px){.steps-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.membership-content{grid-template-columns:auto 1fr}.membership-content>.button{grid-column:2;justify-self:start}}
+@media(max-width:520px){.steps-grid{grid-template-columns:1fr}.membership-content{grid-template-columns:1fr;gap:16px;padding-block:28px}.membership-crown{width:58px;height:58px;border-radius:18px}.membership-content>.button{grid-column:1}.steps-grid article{padding:20px}}
