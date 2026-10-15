@@ -80,6 +80,24 @@ export default function HomePage() {
         <div className="container featured-inner"><div><span className="eyebrow">COMING INTO FOCUS</span><h2>Good tech starts with the right advice.</h2><p>Our catalogue is being prepared. Soon you&apos;ll be able to browse available stock, compare product conditions and place an order online.</p></div><div className="catalogue-placeholder"><span>✦</span><strong>Our product catalogue</strong><small>Products will appear here as inventory is added.</small></div></div>
       </section>
 
+      <section id="how-it-works" className="section container">
+        <div className="section-heading"><div><span className="eyebrow">SIMPLE FROM START TO FINISH</span><h2>Your next tech upgrade, made easier.</h2></div><p>A clear path from choosing a product to getting the right support.</p></div>
+        <div className="steps-grid">
+          <article><span>01</span><h3>Explore</h3><p>Browse categories and compare new, used and refurbished options as stock becomes available.</p></article>
+          <article><span>02</span><h3>Choose confidently</h3><p>Review key specifications, condition and warranty details before you decide.</p></article>
+          <article><span>03</span><h3>Confirm your order</h3><p>Our ordering and payment options will be introduced after checkout and security testing.</p></article>
+          <article><span>04</span><h3>Get support</h3><p>Check delivery availability and get help choosing or using your technology.</p></article>
+        </div>
+      </section>
+
+      <section id="membership" className="membership-band">
+        <div className="container membership-content">
+          <div className="membership-crown" aria-hidden="true">✦</div>
+          <div><span className="eyebrow">MORE VALUE, MORE CONNECTION</span><h2>Meet the Uncle Joe Tech Circle.</h2><p>A planned customer membership for product tips, buying guides, member-only offers and updates on new arrivals. We’ll publish the benefits and terms before enrolment opens.</p></div>
+          <a className="button light" href="#contact">Get membership updates <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
       <section id="why-us" className="section container">
         <div className="section-heading"><div><span className="eyebrow">THE UNCLE JOE DIFFERENCE</span><h2>Shop with confidence</h2></div></div>
         <div className="why-grid"><article><span>01</span><h3>Know what you&apos;re buying</h3><p>Product condition, specifications and available warranty will be clearly stated.</p></article><article><span>02</span><h3>Options that fit your budget</h3><p>Explore suitable new and used devices as stock becomes available.</p></article><article><span>03</span><h3>Help choosing the right tech</h3><p>Get guidance on product selection and availability. Ordering features will be introduced after launch checks.</p></article></div>
