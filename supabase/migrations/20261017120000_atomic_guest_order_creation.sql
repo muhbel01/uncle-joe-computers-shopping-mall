@@ -131,6 +131,18 @@ begin
     raise exception 'Invalid product or quantity' using errcode = '22023';
   end if;
 
+  -- Reject fractional quantities before recordset casting can coerce them to integers.
+  if exists (
+    select 1
+    from jsonb_array_elements(p_payload->'items') as item(value)
+    where jsonb_typeof(item.value) <> 'object'
+       or jsonb_typeof(item.value->'quantity') <> 'number'
+       or (item.value->>'quantity')::numeric <> trunc((item.value->>'quantity')::numeric)
+       or jsonb_typeof(item.value->'productId') <> 'string'
+  ) then
+    raise exception 'Each cart line must contain a product UUID and whole-number quantity' using errcode = '22023';
+  end if;
+
   -- Lock product rows in a stable order to avoid deadlocks for overlapping carts.
   perform p.id
   from public.products p
@@ -150,6 +162,21 @@ begin
     join public.products p on p.id = i."productId" and p.is_active = true
   ) then
     raise exception 'One or more products are unavailable' using errcode = 'P0002';
+  end if;
+
+  -- Re-check idempotency after row locks: a concurrent request with the same key
+  -- may have committed while this request waited for the product locks.
+  select o.id, o.order_number, o.total, o.currency
+    into v_order_id, v_order_number, v_total, currency
+  from public.orders o
+  where o.checkout_request_key = v_key;
+
+  if found then
+    order_id := v_order_id;
+    order_number := v_order_number;
+    order_total := v_total;
+    return next;
+    return;
   end if;
 
   for v_line in
@@ -276,8 +303,8 @@ begin
       and o.payment_status <> 'paid'
       and o.order_status not in ('cancelled', 'returned')
     order by r.expires_at, r.id
-    for update of r skip locked
     limit p_batch_size
+    for update of r skip locked
   loop
     update public.inventory_reservations
       set status = 'released', updated_at = now()
