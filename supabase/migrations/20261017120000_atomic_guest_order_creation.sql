@@ -248,7 +248,7 @@ begin
   v_total := v_subtotal + v_delivery_fee;
 
   v_order_number := 'UJ-' || to_char(now() at time zone 'UTC', 'YYYYMMDD') || '-' ||
-    upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 10));
+    upper(substr(encode(extensions.gen_random_bytes(6), 'hex'), 1, 10));
 
   insert into public.orders (
     order_number, customer_name, customer_email, customer_phone, delivery_address,
