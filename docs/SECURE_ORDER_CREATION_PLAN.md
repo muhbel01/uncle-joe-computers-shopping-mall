@@ -15,6 +15,7 @@ Repository database inspection (17 October 2026) found existing `orders`, `order
 5. **Separate order placement from payment.** Create an order as unpaid/pending, then initialize Paystack only from the server. Verify payment status server-side or from a verified webhook before marking an order paid. Never trust a browser redirect or client-submitted payment status.
 6. **Treat fulfilment separately.** Delivery fee calculation needs explicit service areas and pricing rules. Pickup must not require an address. Until these rules are configured, the checkout must clearly show that final delivery cost is confirmed by the store.
 7. **Protect customer data.** Do not log full phone numbers, email addresses, or delivery addresses. Add rate limiting/abuse controls and a privacy notice before launch. Do not add customer account requirements without a deliberate product decision.
+8. **Fail closed until store configuration is approved.** `checkout_settings` starts with guest checkout, pickup, and delivery disabled. Delivery additionally requires an explicit flat delivery fee. An authorised operator must configure and deliberately enable checkout before the RPC can create an order. The current schema does not support service-area-based delivery pricing.
 
 ## Database fields to review before migration
 
@@ -43,9 +44,9 @@ Before implementation, decide and migrate:
 ## Implementation status (17 October 2026)
 
 - Added `app/api/orders/route.ts`; it validates the request and calls the draft RPC, but the checkout page does not call this endpoint.
-- Added a draft atomic-order migration with server-side price/stock checks, idempotency, item snapshots, and stock reservations.
+- Added a draft atomic-order migration with server-side price/stock checks, idempotency, item snapshots, and stock reservations. Checkout is gated off by default; pickup and delivery must be explicitly enabled, and delivery requires a configured flat fee.
 - Added `private.release_expired_inventory_reservations(integer)` to restore expired unpaid reservations and record a stock movement. It is not scheduled yet. The connected Supabase project reports `pg_cron` as available but not installed; no schema changes have been made to that project.
-- Latest GitHub CI run: type check and lint passed; production build was still running at last inspection. SQL syntax, concurrency, RLS, and privilege behavior remain unverified in an isolated database.
+- A previous GitHub CI run passed type check, lint, and production build. The newest commits have a CI run queued/in progress; check its result before proceeding. SQL syntax, concurrency, RLS, and privilege behavior remain unverified in an isolated database. Creating a Supabase development branch was quoted at US$0.01344/hour, so do not create one without the user's explicit cost approval.
 
 ## Release gate
 
