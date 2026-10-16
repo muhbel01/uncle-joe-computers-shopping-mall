@@ -69,8 +69,8 @@ export default function CartPage() {
           <div><span>Delivery</span><small>Calculated after delivery details are confirmed.</small></div>
           <div className="cart-summary-total"><span>Estimated total</span><strong>{money.format(subtotal)}</strong></div>
           <p>Prices and availability must be confirmed before an order is accepted. Delivery, discounts and any applicable charges are not included.</p>
-          <button className="button primary checkout-disabled" type="button" disabled>Checkout — coming next</button>
-          <small>Online orders and payments are not active yet.</small>
+          <Link className="button primary checkout-link" href="/checkout">Continue to checkout preview</Link>
+          <small>Order submission and online payments are not active yet.</small>
         </aside>
       </div>
     </main>
