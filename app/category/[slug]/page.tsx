@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductGrid, type StoreProduct } from "@/components/product-grid";
 import { getPublicSupabaseClient } from "@/lib/supabase/public";
+import { storeConfig } from "@/lib/store-config";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -46,7 +47,7 @@ export default async function CategoryPage({ params }: Props) {
     <main className="page-shell">
       <div className="container page-heading">
         <Link href="/" className="back-link">← Home</Link>
-        <span className="eyebrow">SHOP BY CATEGORY</span>
+        <span className="eyebrow">SHOP {storeConfig.shortName} BY CATEGORY</span>
         <h1>{category.name}</h1>
         <p>{category.description || "Browse products in this category."}</p>
       </div>
