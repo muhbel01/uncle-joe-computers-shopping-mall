@@ -42,22 +42,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             typeof item.productId === "string" &&
             typeof item.slug === "string" &&
             typeof item.name === "string" &&
+            (item.condition === "new" || item.condition === "used" || item.condition === "refurbished") &&
             Number.isFinite(item.price) && item.price >= 0 &&
             Number.isInteger(item.quantity) && item.quantity > 0 &&
-            Number.isInteger(item.stockQuantity) && item.stockQuantity >= 0
+            Number.isInteger(item.stockQuantity) && item.stockQuantity >= 0 &&
+            (item.imageUrl == null || typeof item.imageUrl === "string")
           ).map((item) => ({ ...item, quantity: Math.min(item.quantity, item.stockQuantity) }))
             .filter((item) => item.quantity > 0);
           setItems(safe);
         }
       }
     } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
+      // Storage can be blocked or unavailable in private browsing; keep the cart usable in memory.
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Ignore storage cleanup failures.
+      }
     }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (hydrated) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // The cart remains usable for this session even when persistence is unavailable.
+    }
   }, [items, hydrated]);
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">, quantity = 1) => {
