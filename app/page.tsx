@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { storeConfig } from "@/lib/store-config";
 
 const categories = [
   { icon: "💻", title: "Computers & Laptops", slug: "computers-laptops", text: "Work, school and business" },
@@ -18,15 +19,15 @@ export default function HomePage() {
     <main>
       <div className="topbar">
         <div className="container topbar-inner">
-          <span>Based in Osogbo, Osun State, Nigeria</span>
+          <span>Based in {storeConfig.location}</span>
           <span>Customer support details will be published before launch</span>
         </div>
       </div>
       <header className="header">
         <div className="container header-inner">
-          <Link className="brand" href="/" aria-label="Uncle Joe Computers home">
-            <span className="brand-mark">UJ</span>
-            <span><strong>UNCLE JOE</strong><small>COMPUTERS SHOPPING MALL</small></span>
+          <Link className="brand" href="/" aria-label={`${storeConfig.name} home`}>
+            <span className="brand-mark">{storeConfig.shortName.slice(0, 2).toUpperCase()}</span>
+            <span><strong>{storeConfig.name}</strong><small>{storeConfig.shortName}</small></span>
           </Link>
           <form className="search" action="/search">
             <label className="sr-only" htmlFor="q">Search products</label>
@@ -47,13 +48,13 @@ export default function HomePage() {
           <div className="hero-copy">
             <span className="eyebrow">YOUR TRUSTED TECH STORE</span>
             <h1>Technology for work, life and everything in between.</h1>
-            <p>Shop computers, phones, accessories, networking equipment and power solutions — with friendly support from our Osogbo team.</p>
+            <p>Shop computers, phones, accessories, networking equipment and power solutions — with helpful support from our team.</p>
             <div className="hero-actions"><a className="button primary" href="#categories">Explore categories</a><a className="button secondary" href="#contact">Contact information</a></div>
             <div className="trust-row"><span>✓ New and used options</span><span>✓ Delivery options on enquiry</span><span>✓ Customer support planned</span></div>
           </div>
           <div className="hero-art" aria-label="Technology product illustration" role="img">
             <div className="glow" />
-            <div className="laptop"><div className="laptop-screen"><span>UJ</span><small>SMARTER TECH. BETTER VALUE.</small></div><div className="laptop-base" /></div>
+            <div className="laptop"><div className="laptop-screen"><span>{storeConfig.shortName.slice(0, 2).toUpperCase()}</span><small>SMARTER TECH. BETTER VALUE.</small></div><div className="laptop-base" /></div>
             <div className="phone"><div className="phone-screen"><span>●</span><b>TECH</b><small>made simple</small></div></div>
             <div className="floating-card">⚡ Reliable power</div>
             <div className="floating-chip">Genuine advice. Great choice.</div>
@@ -93,17 +94,17 @@ export default function HomePage() {
       <section id="membership" className="membership-band">
         <div className="container membership-content">
           <div className="membership-crown" aria-hidden="true">✦</div>
-          <div><span className="eyebrow">MORE VALUE, MORE CONNECTION</span><h2>Meet the Uncle Joe Tech Circle.</h2><p>A planned customer membership for product tips, buying guides, member-only offers and updates on new arrivals. We’ll publish the benefits and terms before enrolment opens.</p></div>
+          <div><span className="eyebrow">MORE VALUE, MORE CONNECTION</span><h2>Meet our customer circle.</h2><p>A planned customer membership for product tips, buying guides, offers and new-arrival updates. Benefits and terms can be configured before enrolment opens.</p></div>
           <a className="button light" href="#contact">Get membership updates <span aria-hidden="true">→</span></a>
         </div>
       </section>
 
       <section id="why-us" className="section container">
-        <div className="section-heading"><div><span className="eyebrow">THE UNCLE JOE DIFFERENCE</span><h2>Shop with confidence</h2></div></div>
+        <div className="section-heading"><div><span className="eyebrow">THE STORE DIFFERENCE</span><h2>Shop with confidence</h2></div></div>
         <div className="why-grid"><article><span>01</span><h3>Know what you&apos;re buying</h3><p>Product condition, specifications and available warranty will be clearly stated.</p></article><article><span>02</span><h3>Options that fit your budget</h3><p>Explore suitable new and used devices as stock becomes available.</p></article><article><span>03</span><h3>Help choosing the right tech</h3><p>Get guidance on product selection and availability. Ordering features will be introduced after launch checks.</p></article></div>
       </section>
 
-      <footer id="contact" className="footer"><div className="container footer-inner"><div><Link className="brand footer-brand" href="/"><span className="brand-mark">UJ</span><span><strong>UNCLE JOE</strong><small>COMPUTERS SHOPPING MALL</small></span></Link><p>Your technology shopping partner in Osogbo, Osun State, Nigeria.</p></div><div><strong>Customer care</strong><p>Contact details and WhatsApp support will be added before launch.</p><small>Online checkout is not active yet.</small></div></div><div className="container copyright">© {new Date().getFullYear()} Uncle Joe Computers Shopping Mall. All rights reserved.</div></footer>
+      <footer id="contact" className="footer"><div className="container footer-inner"><div><Link className="brand footer-brand" href="/"><span className="brand-mark">{storeConfig.shortName.slice(0, 2).toUpperCase()}</span><span><strong>{storeConfig.name}</strong><small>{storeConfig.shortName}</small></span></Link><p>Your online shopping partner in {storeConfig.location}.</p></div><div><strong>Customer care</strong><p>Contact details and WhatsApp support will be added before launch.</p><small>Online checkout is not active yet.</small></div></div><div className="container copyright">© {new Date().getFullYear()} {storeConfig.name}. All rights reserved.</div></footer>
     </main>
   );
 }
