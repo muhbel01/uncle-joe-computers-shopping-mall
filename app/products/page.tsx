@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ProductGrid, type StoreProduct } from "@/components/product-grid";
 import { getPublicSupabaseClient } from "@/lib/supabase/public";
+import { storeConfig } from "@/lib/store-config";
 
 export const metadata: Metadata = {
   title: "Shop Products",
-  description: "Browse available computers, phones, accessories and technology products at Uncle Joe Computers Shopping Mall.",
+  description: `Browse available products at ${storeConfig.name}.`,
 };
 
 export const revalidate = 60;
@@ -28,7 +29,7 @@ export default async function ProductsPage() {
     <main className="page-shell">
       <div className="container page-heading">
         <Link href="/" className="back-link">← Home</Link>
-        <span className="eyebrow">UNCLE JOE COMPUTERS</span>
+        <span className="eyebrow">{storeConfig.shortName}</span>
         <h1>Shop all products</h1>
         <p>Browse our published stock. Product condition, price and warranty information are shown where available.</p>
       </div>
