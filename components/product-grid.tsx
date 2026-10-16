@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { storeConfig } from "@/lib/store-config";
 
 export type StoreProduct = {
   id: string;
@@ -17,7 +18,7 @@ export type StoreProduct = {
 
 const naira = new Intl.NumberFormat("en-NG", {
   style: "currency",
-  currency: "NGN",
+  currency: storeConfig.currency,
   maximumFractionDigits: 0,
 });
 
@@ -37,7 +38,7 @@ export function ProductGrid({ products }: { products: StoreProduct[] }) {
     <div className="product-grid">
       {products.map((product) => (
         <article className="product-card" key={product.id}>
-          {product.image_url ? <div className="product-art product-art-photo"><Image src={product.image_url} alt={product.image_alt || product.name} width={480} height={320} unoptimized /></div> : <div className="product-art" aria-hidden="true">UJ</div>}
+          {product.image_url ? <div className="product-art product-art-photo"><Image src={product.image_url} alt={product.image_alt || product.name} width={480} height={320} unoptimized /></div> : <div className="product-art" aria-hidden="true">{storeConfig.shortName.slice(0, 2).toUpperCase()}</div>}
           <div className="product-card-body">
             {product.category?.name && <small className="product-category">{product.category.name}</small>}
             <h2><Link href={`/products/${product.slug}`}>{product.name}</Link></h2>
