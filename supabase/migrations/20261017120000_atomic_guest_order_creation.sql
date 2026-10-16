@@ -240,9 +240,9 @@ returns table(order_id uuid, order_number text, order_total numeric, currency te
 language sql
 security invoker
 set search_path = ''
-as $
+as $$
   select * from private.create_guest_order(p_payload);
-$;
+$$;
 
 revoke all on function public.create_guest_order(jsonb) from public;
 grant execute on function public.create_guest_order(jsonb) to anon, authenticated;
@@ -258,7 +258,7 @@ returns integer
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_reservation record;
   v_released integer := 0;
@@ -318,7 +318,7 @@ begin
 
   return v_released;
 end;
-$;
+$$;
 
 revoke all on function private.release_expired_inventory_reservations(integer) from public, anon, authenticated;
 
