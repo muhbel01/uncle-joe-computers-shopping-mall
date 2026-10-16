@@ -128,6 +128,25 @@ begin
     raise exception 'TEST FAILED: rejected order changed stock';
   end if;
 
+  -- Inactive products must not be purchasable, even when stock exists.
+  update public.products set is_active = false where id = v_product;
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_short_key::text,
+      'customer', jsonb_build_object('name', 'Test Buyer', 'phone', '08012345678', 'email', 'buyer@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_product::text, 'quantity', 1))
+    ));
+  exception when sqlstate 'P0001' then
+    v_rejected := true;
+  end;
+  update public.products set is_active = true where id = v_product;
+  if not v_rejected then
+    raise exception 'TEST FAILED: inactive product was purchasable';
+  end if;
+
   update public.inventory_reservations
   set expires_at = now() - interval '1 minute'
   where order_id = v_first.order_id and status = 'reserved';
@@ -150,6 +169,16 @@ begin
     raise exception 'TEST FAILED: expired unpaid order was not cancelled';
   end if;
 
+  -- Running the release routine again must not restore the same stock twice.
+  select private.release_expired_inventory_reservations(100) into v_released;
+  if v_released <> 0 then
+    raise exception 'TEST FAILED: second expiry pass released % reservations', v_released;
+  end if;
+  select stock_quantity into v_stock from public.products where id = v_product;
+  if v_stock <> 5 then
+    raise exception 'TEST FAILED: repeated expiry pass changed stock to %', v_stock;
+  end if;
+
   update public.checkout_settings
   set guest_checkout_enabled = false
   where id = true;
@@ -170,6 +199,6 @@ begin
     raise exception 'TEST FAILED: checkout succeeded while globally disabled';
   end if;
 
-  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, fractional quantity rejection, insufficient stock rollback, reservation expiry, and disabled checkout';
+  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, fractional quantity rejection, insufficient stock rollback, inactive-product rejection, reservation expiry without double restoration, and disabled checkout';
 end
 $$;
