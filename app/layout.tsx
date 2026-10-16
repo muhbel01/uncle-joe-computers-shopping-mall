@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { storeConfig } from "@/lib/store-config";
+import { CartProvider } from "@/components/cart-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,7 +30,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang={storeConfig.language}>
-      <body>{children}</body>
+      <body><CartProvider>{children}</CartProvider></body>
     </html>
   );
 }
