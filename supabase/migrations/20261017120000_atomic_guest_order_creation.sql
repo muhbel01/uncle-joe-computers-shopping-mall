@@ -30,7 +30,7 @@ alter table public.inventory_movements
   add constraint inventory_movements_movement_type_check
   check (movement_type in ('opening_balance','restock','sale','return','damage','correction','reservation','release'));
 
-create or replace function public.create_guest_order(p_payload jsonb)
+create or replace function private.create_guest_order(p_payload jsonb)
 returns table(order_id uuid, order_number text, order_total numeric, currency text)
 language plpgsql
 security definer
@@ -225,8 +225,22 @@ exception
 end;
 $$;
 
+-- The exposed public RPC is an invoker-only wrapper. Privileged work stays in the
+-- non-exposed private schema, and the private implementation has a fixed search path.
+create or replace function public.create_guest_order(p_payload jsonb)
+returns table(order_id uuid, order_number text, order_total numeric, currency text)
+language sql
+security invoker
+set search_path = ''
+as $
+  select * from private.create_guest_order(p_payload);
+$;
+
 revoke all on function public.create_guest_order(jsonb) from public;
 grant execute on function public.create_guest_order(jsonb) to anon, authenticated;
+grant usage on schema private to anon, authenticated;
+revoke all on function private.create_guest_order(jsonb) from public;
+grant execute on function private.create_guest_order(jsonb) to anon, authenticated;
 
 
 -- Trusted stock-release routine. It is deliberately not callable by browser roles.
