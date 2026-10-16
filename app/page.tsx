@@ -34,7 +34,7 @@ export default function HomePage() {
             <input id="q" name="q" placeholder="Search laptops, phones, accessories..." />
             <button type="submit">Search</button>
           </form>
-          <Link className="cart" href="/products">Shop products <span>→</span></Link>
+          <div className="header-actions"><Link className="header-shop-link" href="/products">Shop products</Link><Link className="cart" href="/cart">Cart <span>→</span></Link></div>
         </div>
         <nav className="nav">
           <div className="container nav-inner">
