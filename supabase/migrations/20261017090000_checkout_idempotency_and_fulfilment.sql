@@ -1,6 +1,5 @@
 -- Checkout schema prerequisites only.
--- Review against the authoritative schema before applying; this repository's historical
--- migration files are not currently present in the checked-out branch.
+-- Review against the initial schema and test in an isolated database before applying.
 -- This migration is intentionally NOT applied to the connected Supabase project.
 
 begin;
