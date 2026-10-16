@@ -8,12 +8,23 @@ import { z } from "zod";
  */
 const trimmedText = (max: number) => z.string().trim().min(1).max(max);
 
+const phoneSchema = z
+  .string()
+  .trim()
+  .min(7)
+  .max(30)
+  .regex(/^[+0-9() .-]+$/, "Enter a valid phone number.")
+  .refine(
+    (phone) => (phone.match(/[0-9]/g) ?? []).length >= 7,
+    "Enter a phone number containing at least 7 digits.",
+  );
+
 export const checkoutRequestSchema = z
   .object({
     requestKey: z.string().uuid(),
     customer: z.object({
       name: trimmedText(120),
-      phone: z.string().trim().min(7).max(30).regex(/^[+0-9() .-]+$/, "Enter a valid phone number."),
+      phone: phoneSchema,
       email: z.union([z.literal(""), z.string().trim().email().max(254)]).optional().default(""),
     }).strict(),
     fulfilmentMethod: z.enum(["delivery", "pickup"]),
