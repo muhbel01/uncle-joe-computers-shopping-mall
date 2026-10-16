@@ -76,26 +76,34 @@ begin
     return;
   end if;
 
-  v_name := nullif(left(trim(coalesce(p_payload#>>'{customer,name}', '')), 120), '');
-  v_phone := nullif(left(trim(coalesce(p_payload#>>'{customer,phone}', '')), 30), '');
-  v_email := nullif(left(trim(coalesce(p_payload#>>'{customer,email}', '')), 254), '');
+  v_name := nullif(trim(coalesce(p_payload#>>'{customer,name}', '')), '');
+  v_phone := nullif(trim(coalesce(p_payload#>>'{customer,phone}', '')), '');
+  v_email := nullif(trim(coalesce(p_payload#>>'{customer,email}', '')), '');
   v_fulfilment := p_payload->>'fulfilmentMethod';
-  v_note := nullif(left(trim(coalesce(p_payload->>'customerNote', '')), 1000), '');
+  v_note := nullif(trim(coalesce(p_payload->>'customerNote', '')), '');
   v_address := coalesce(p_payload->'deliveryAddress', '{}'::jsonb);
 
-  if v_name is null or v_phone is null or length(regexp_replace(v_phone, '[^0-9]', '', 'g')) < 7 then
+  if v_name is null or length(v_name) > 120
+     or v_phone is null or length(v_phone) > 30
+     or length(regexp_replace(v_phone, '[^0-9]', '', 'g')) < 7 then
     raise exception 'Valid customer name and phone are required' using errcode = '22023';
+  end if;
+  if v_note is not null and length(v_note) > 1000 then
+    raise exception 'Order notes are too long' using errcode = '22023';
   end if;
   if v_email is not null and v_email !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' then
     raise exception 'Invalid email address' using errcode = '22023';
   end if;
-  if v_fulfilment not in ('delivery', 'pickup') then
+  if v_fulfilment is null or v_fulfilment not in ('delivery', 'pickup') then
     raise exception 'Choose delivery or pickup' using errcode = '22023';
   end if;
   if v_fulfilment = 'delivery' and (
     nullif(trim(coalesce(v_address->>'address','')), '') is null or
     nullif(trim(coalesce(v_address->>'city','')), '') is null or
-    nullif(trim(coalesce(v_address->>'state','')), '') is null
+    nullif(trim(coalesce(v_address->>'state','')), '') is null or
+    length(coalesce(v_address->>'address','')) > 240 or
+    length(coalesce(v_address->>'city','')) > 100 or
+    length(coalesce(v_address->>'state','')) > 100
   ) then
     raise exception 'Complete the delivery address' using errcode = '22023';
   end if;
