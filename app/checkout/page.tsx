@@ -139,10 +139,10 @@ export default function CheckoutPage() {
                 <label>City / town<input autoComplete="address-level2" required maxLength={100} value={customer.city} onChange={(e) => update("city", e.target.value)} /></label>
                 <label>State<input autoComplete="address-level1" required maxLength={100} value={customer.state} onChange={(e) => update("state", e.target.value)} /></label>
               </div>
-            ) : <p className="checkout-note">Pickup is subject to the store's checkout settings and confirmation.</p>}
+            ) : <p className="checkout-note">Pickup is subject to the store&apos;s checkout settings and confirmation.</p>}
             <label>Order notes <span>(optional)</span><textarea rows={3} maxLength={1000} value={customer.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Delivery instructions or product questions" /></label>
           </section>
-          <div className="checkout-safety-note"><strong>Payment is not enabled here</strong><p>Submitting can create an unpaid order only when the store's database has checkout enabled. No online payment is taken by this form.</p></div>
+          <div className="checkout-safety-note"><strong>Payment is not enabled here</strong><p>Submitting can create an unpaid order only when the store&apos;s database has checkout enabled. No online payment is taken by this form.</p></div>
           {errorMessage && <div className="checkout-safety-note" role="alert"><strong>Order not confirmed</strong><p>{errorMessage}</p></div>}
           <button className="button primary" type="submit" disabled={submitting}>
             {submitting ? "Submitting order…" : "Submit order request"}
