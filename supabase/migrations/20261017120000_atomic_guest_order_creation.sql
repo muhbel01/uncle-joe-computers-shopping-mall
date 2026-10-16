@@ -159,6 +159,236 @@ begin
     raise exception 'Cart must contain between 1 and 50 items' using errcode = '22023';
   end if;
 
+  -- Validate raw JSON before any UUID/integer casts can raise low-level database errors.
+  if exists (
+    select 1
+    from jsonb_array_elements(p_payload->'items') as item(value)
+    where jsonb_typeof(item.value) <> 'object'
+       or jsonb_typeof(item.value->'productId') <> 'string'
+       or coalesce(item.value->>'productId', '') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}
+
+  -- Lock product rows in a stable order to avoid deadlocks for overlapping carts.
+  perform p.id
+  from public.products p
+  join (
+    select distinct i."productId" as product_id
+    from jsonb_to_recordset(p_payload->'items') as i("productId" uuid, quantity integer)
+  ) requested on requested.product_id = p.id
+  order by p.id
+  for update of p;
+
+  if (
+    select count(*)
+    from jsonb_to_recordset(p_payload->'items') as i("productId" uuid, quantity integer)
+  ) <> (
+    select count(*)
+    from jsonb_to_recordset(p_payload->'items') as i("productId" uuid, quantity integer)
+    join public.products p on p.id = i."productId" and p.is_active = true
+  ) then
+    raise exception 'One or more products are unavailable' using errcode = 'P0002';
+  end if;
+
+  -- Re-check idempotency after row locks: a concurrent request with the same key
+  -- may have committed while this request waited for the product locks.
+  select o.id, o.order_number, o.total, o.currency
+    into v_order_id, v_order_number, v_total, currency
+  from public.orders o
+  where o.checkout_request_key = v_key;
+
+  if found then
+    order_id := v_order_id;
+    order_number := v_order_number;
+    order_total := v_total;
+    return next;
+    return;
+  end if;
+
+  for v_line in
+    select i."productId" as product_id, i.quantity
+    from jsonb_to_recordset(p_payload->'items') as i("productId" uuid, quantity integer)
+    order by i."productId"
+  loop
+    select * into v_product from public.products p where p.id = v_line.product_id;
+    if v_product.stock_quantity < v_line.quantity then
+      raise exception 'Insufficient stock for product %', v_product.name using errcode = 'P0001';
+    end if;
+    v_subtotal := v_subtotal + (v_product.price * v_line.quantity);
+    v_count := v_count + 1;
+  end loop;
+
+  if v_count = 0 then
+    raise exception 'Cart is empty' using errcode = '22023';
+  end if;
+
+  v_total := v_subtotal + v_delivery_fee;
+
+  v_order_number := 'UJ-' || to_char(now() at time zone 'UTC', 'YYYYMMDD') || '-' ||
+    upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 10));
+
+  insert into public.orders (
+    order_number, customer_name, customer_email, customer_phone, delivery_address,
+    subtotal, delivery_fee, discount_total, total, currency, order_status,
+    payment_status, customer_note, fulfilment_method, checkout_request_key
+  ) values (
+    v_order_number, v_name, v_email, v_phone,
+    case when v_fulfilment = 'delivery' then v_address else '{}'::jsonb end,
+    v_subtotal, v_delivery_fee, 0, v_total, 'NGN', 'pending', 'unpaid', v_note, v_fulfilment, v_key
+  ) returning id into v_order_id;
+
+  for v_line in
+    select i."productId" as product_id, i.quantity
+    from jsonb_to_recordset(p_payload->'items') as i("productId" uuid, quantity integer)
+    order by i."productId"
+  loop
+    select * into v_product from public.products p where p.id = v_line.product_id;
+
+    insert into public.order_items (
+      order_id, product_id, product_name, sku, condition, quantity,
+      unit_price, line_total, warranty_snapshot
+    ) values (
+      v_order_id, v_product.id, v_product.name, v_product.sku, v_product.condition,
+      v_line.quantity, v_product.price, v_product.price * v_line.quantity,
+      v_product.warranty_description
+    );
+
+    update public.products
+      set stock_quantity = stock_quantity - v_line.quantity, updated_at = now()
+      where id = v_product.id;
+
+    insert into public.inventory_reservations (order_id, product_id, quantity)
+      values (v_order_id, v_product.id, v_line.quantity);
+
+    insert into public.inventory_movements (
+      product_id, quantity_delta, movement_type, reference, notes
+    ) values (
+      v_product.id, -v_line.quantity, 'reservation', v_order_number,
+      'Stock reserved for pending guest order'
+    );
+  end loop;
+
+  order_id := v_order_id;
+  order_number := v_order_number;
+  order_total := v_total;
+  currency := 'NGN';
+  return next;
+exception
+  when unique_violation then
+    -- A concurrent retry may win the idempotency race. Return its order if present.
+    select o.id, o.order_number, o.total, o.currency
+      into order_id, order_number, order_total, currency
+    from public.orders o
+    where o.checkout_request_key = (p_payload->>'requestKey')::uuid;
+    if order_id is not null then
+      return next;
+      return;
+    end if;
+    raise;
+end;
+$$;
+
+-- The exposed public RPC is an invoker-only wrapper. Privileged work stays in the
+-- non-exposed private schema, and the private implementation has a fixed search path.
+create or replace function public.create_guest_order(p_payload jsonb)
+returns table(order_id uuid, order_number text, order_total numeric, currency text)
+language sql
+security invoker
+set search_path = ''
+as $$
+  select * from private.create_guest_order(p_payload);
+$$;
+
+revoke all on function public.create_guest_order(jsonb) from public;
+grant execute on function public.create_guest_order(jsonb) to anon, authenticated;
+grant usage on schema private to anon, authenticated;
+revoke all on function private.create_guest_order(jsonb) from public;
+grant execute on function private.create_guest_order(jsonb) to anon, authenticated;
+
+
+-- Trusted stock-release routine. It is deliberately not callable by browser roles.
+-- A scheduler must invoke this periodically after the migration is reviewed and applied.
+create or replace function private.release_expired_inventory_reservations(p_batch_size integer default 100)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_reservation record;
+  v_released integer := 0;
+begin
+  if p_batch_size is null or p_batch_size < 1 or p_batch_size > 1000 then
+    raise exception 'Batch size must be between 1 and 1000' using errcode = '22023';
+  end if;
+
+  for v_reservation in
+    select r.id, r.order_id, r.product_id, r.quantity, o.order_number
+    from public.inventory_reservations r
+    join public.orders o on o.id = r.order_id
+    where r.status = 'reserved'
+      and r.expires_at <= now()
+      and o.payment_status is distinct from 'paid'
+      and o.order_status = 'pending'
+    order by r.expires_at, r.id
+    limit p_batch_size
+    for update of r skip locked
+  loop
+    update public.inventory_reservations
+      set status = 'released', updated_at = now()
+      where id = v_reservation.id and status = 'reserved';
+
+    if not found then
+      continue;
+    end if;
+
+    update public.products
+      set stock_quantity = stock_quantity + v_reservation.quantity,
+          updated_at = now()
+      where id = v_reservation.product_id;
+
+    insert into public.inventory_movements (
+      product_id, quantity_delta, movement_type, reference, notes
+    ) values (
+      v_reservation.product_id,
+      v_reservation.quantity,
+      'release',
+      v_reservation.order_number,
+      'Expired unpaid guest-order reservation released'
+    );
+
+    update public.orders o
+      set order_status = 'cancelled', updated_at = now()
+      where o.id = v_reservation.order_id
+        and o.payment_status is distinct from 'paid'
+        and o.order_status = 'pending'
+        and not exists (
+          select 1
+          from public.inventory_reservations remaining
+          where remaining.order_id = o.id and remaining.status = 'reserved'
+        );
+
+    v_released := v_released + 1;
+  end loop;
+
+  return v_released;
+end;
+$$;
+
+revoke all on function private.release_expired_inventory_reservations(integer) from public, anon, authenticated;
+
+commit;
+
+       or jsonb_typeof(item.value->'quantity') <> 'number'
+       or case
+            when jsonb_typeof(item.value->'quantity') = 'number'
+            then (item.value->>'quantity')::numeric <> trunc((item.value->>'quantity')::numeric)
+              or (item.value->>'quantity')::numeric < 1
+              or (item.value->>'quantity')::numeric > 50
+            else true
+          end
+  ) then
+    raise exception 'Each cart line must contain a valid product UUID and whole-number quantity between 1 and 50' using errcode = '22023';
+  end if;
+
   if exists (
     select 1
     from jsonb_to_recordset(p_payload->'items') as i("productId" uuid, quantity integer)
