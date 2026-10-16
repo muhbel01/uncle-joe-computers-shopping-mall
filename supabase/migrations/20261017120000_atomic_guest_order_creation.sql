@@ -228,4 +228,76 @@ $$;
 revoke all on function public.create_guest_order(jsonb) from public;
 grant execute on function public.create_guest_order(jsonb) to anon, authenticated;
 
+
+-- Trusted stock-release routine. It is deliberately not callable by browser roles.
+-- A scheduler must invoke this periodically after the migration is reviewed and applied.
+create or replace function private.release_expired_inventory_reservations(p_batch_size integer default 100)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_reservation record;
+  v_released integer := 0;
+begin
+  if p_batch_size is null or p_batch_size < 1 or p_batch_size > 1000 then
+    raise exception 'Batch size must be between 1 and 1000' using errcode = '22023';
+  end if;
+
+  for v_reservation in
+    select r.id, r.order_id, r.product_id, r.quantity, o.order_number
+    from public.inventory_reservations r
+    join public.orders o on o.id = r.order_id
+    where r.status = 'reserved'
+      and r.expires_at <= now()
+      and o.payment_status <> 'paid'
+      and o.order_status not in ('cancelled', 'returned')
+    order by r.expires_at, r.id
+    for update of r skip locked
+    limit p_batch_size
+  loop
+    update public.inventory_reservations
+      set status = 'released', updated_at = now()
+      where id = v_reservation.id and status = 'reserved';
+
+    if not found then
+      continue;
+    end if;
+
+    update public.products
+      set stock_quantity = stock_quantity + v_reservation.quantity,
+          updated_at = now()
+      where id = v_reservation.product_id;
+
+    insert into public.inventory_movements (
+      product_id, quantity_delta, movement_type, reference, notes
+    ) values (
+      v_reservation.product_id,
+      v_reservation.quantity,
+      'release',
+      v_reservation.order_number,
+      'Expired unpaid guest-order reservation released'
+    );
+
+    update public.orders o
+      set order_status = 'cancelled', updated_at = now()
+      where o.id = v_reservation.order_id
+        and o.payment_status <> 'paid'
+        and o.order_status = 'pending'
+        and not exists (
+          select 1
+          from public.inventory_reservations remaining
+          where remaining.order_id = o.id and remaining.status = 'reserved'
+        );
+
+    v_released := v_released + 1;
+  end loop;
+
+  return v_released;
+end;
+$;
+
+revoke all on function private.release_expired_inventory_reservations(integer) from public, anon, authenticated;
+
 commit;
