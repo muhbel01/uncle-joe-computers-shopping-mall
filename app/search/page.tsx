@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ProductGrid, type StoreProduct } from "@/components/product-grid";
 import { getPublicSupabaseClient } from "@/lib/supabase/public";
+import { storeConfig } from "@/lib/store-config";
 
 export const metadata: Metadata = { title: "Search Products" };
 export const revalidate = 30;
@@ -32,7 +33,7 @@ export default async function SearchPage({ searchParams }: Props) {
     <main className="page-shell">
       <div className="container page-heading">
         <Link href="/" className="back-link">← Home</Link>
-        <span className="eyebrow">FIND YOUR TECH</span>
+        <span className="eyebrow">SEARCH {storeConfig.shortName}</span>
         <h1>Search products</h1>
         <form className="search search-page-form" action="/search">
           <label className="sr-only" htmlFor="q">Search products</label>
