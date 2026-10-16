@@ -168,3 +168,6 @@
 .checkout-disabled{width:100%;border:0;opacity:.55;cursor:not-allowed}
 .cart-summary>small{display:block;margin-top:10px;font-size:10px;line-height:1.6}
 @media(max-width:760px){.cart-layout{grid-template-columns:1fr;padding-bottom:40px}.cart-summary{position:static}.cart-line{grid-template-columns:70px minmax(0,1fr);gap:12px;padding:13px}.cart-line-image{width:70px;height:70px}.cart-line-total{grid-column:2;justify-self:start}.cart-product-name{font-size:13px}}
+
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:16px}.header-shop-link{font-size:12px;font-weight:700;white-space:nowrap}
+@media(max-width:760px){.header-actions{margin-left:auto;gap:12px}.header-shop-link{font-size:11px}.cart{font-size:12px}}
