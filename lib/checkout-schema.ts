@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * Untrusted checkout input only. Never accept prices, totals, stock levels,
  * product names, or payment status from the browser as authoritative.
- * The future server endpoint must re-fetch products and calculate totals
+ * The server endpoint re-fetches products and calculates totals
  * from the database before creating an order.
  */
 const trimmedText = (max: number) => z.string().trim().min(1).max(max);
