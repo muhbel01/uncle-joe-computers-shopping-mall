@@ -11,24 +11,100 @@ const money = new Intl.NumberFormat("en-NG", {
   maximumFractionDigits: 0,
 });
 
+type CreatedOrder = {
+  id: string;
+  number: string;
+  total: number;
+  currency: string;
+  paymentStatus: "unpaid";
+  fulfilmentMethod: "delivery" | "pickup";
+};
+
 export default function CheckoutPage() {
-  const { items, hydrated, itemCount, subtotal } = useCart();
+  const { items, hydrated, itemCount, subtotal, clearCart } = useCart();
   const [fulfilment, setFulfilment] = useState<"delivery" | "pickup">("delivery");
-  const [reviewed, setReviewed] = useState(false);
   const [customer, setCustomer] = useState({ name: "", phone: "", email: "", address: "", city: "", state: "", notes: "" });
+  const [requestKey, setRequestKey] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [order, setOrder] = useState<CreatedOrder | null>(null);
 
   function update(field: keyof typeof customer, value: string) {
     setCustomer((current) => ({ ...current, [field]: value }));
-    setReviewed(false);
+    setRequestKey("");
+    setErrorMessage("");
   }
 
-  function reviewOrder(event: React.FormEvent<HTMLFormElement>) {
+  async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setReviewed(true);
+    setSubmitting(true);
+    setErrorMessage("");
+
+    // Keep the same key on retries so a network timeout cannot create duplicate orders.
+    const activeRequestKey = requestKey || crypto.randomUUID();
+    setRequestKey(activeRequestKey);
+
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestKey: activeRequestKey,
+          customer: { name: customer.name, phone: customer.phone, email: customer.email },
+          fulfilmentMethod: fulfilment,
+          deliveryAddress: {
+            address: fulfilment === "delivery" ? customer.address : "",
+            city: fulfilment === "delivery" ? customer.city : "",
+            state: fulfilment === "delivery" ? customer.state : "",
+          },
+          customerNote: customer.notes,
+          items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setErrorMessage(typeof result.error === "string"
+          ? result.error
+          : "We couldn't place your order. Please review your details and try again.");
+        return;
+      }
+
+      if (!result.order?.id || !result.order?.number || typeof result.order?.total !== "number") {
+        setErrorMessage("The store returned an unexpected response. Please contact the store before retrying.");
+        return;
+      }
+
+      setOrder(result.order as CreatedOrder);
+      clearCart();
+    } catch {
+      setErrorMessage("We couldn't reach the store. Your request may not have completed. Retry without changing your details to avoid a duplicate order.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!hydrated) {
     return <main className="page-shell"><div className="container page-heading"><h1>Checkout</h1><p>Loading your cart…</p></div></main>;
+  }
+
+  if (order) {
+    return (
+      <main className="page-shell">
+        <div className="container page-heading">
+          <span className="eyebrow">{storeConfig.shortName}</span>
+          <h1>Order received</h1>
+          <p>Your order has been recorded, but payment has not been taken.</p>
+          <section className="checkout-review" aria-live="polite">
+            <h2>Order {order.number}</h2>
+            <p><strong>Total:</strong> {new Intl.NumberFormat("en-NG", { style: "currency", currency: order.currency || storeConfig.currency, maximumFractionDigits: 0 }).format(order.total)}</p>
+            <p><strong>Payment:</strong> Not paid</p>
+            <p>The store must confirm payment and fulfilment arrangements separately. Do not treat this as a paid order.</p>
+          </section>
+          <Link className="button primary" href="/products">Continue shopping</Link>
+        </div>
+      </main>
+    );
   }
 
   if (items.length === 0) {
@@ -41,10 +117,10 @@ export default function CheckoutPage() {
         <Link href="/cart" className="back-link">← Back to cart</Link>
         <span className="eyebrow">{storeConfig.shortName}</span>
         <h1>Checkout details</h1>
-        <p>Enter the details needed to prepare your order. This is currently a checkout preview; no order or payment will be submitted.</p>
+        <p>Submit your details to request an order. Prices and availability are checked by the store database.</p>
       </div>
       <div className="container checkout-layout">
-        <form className="checkout-form" onSubmit={reviewOrder}>
+        <form className="checkout-form" onSubmit={submitOrder}>
           <section className="checkout-section">
             <h2>Contact details</h2>
             <label>Full name<input autoComplete="name" required minLength={2} maxLength={120} value={customer.name} onChange={(e) => update("name", e.target.value)} /></label>
@@ -54,8 +130,8 @@ export default function CheckoutPage() {
           <section className="checkout-section">
             <h2>How would you like to receive your order?</h2>
             <div className="fulfilment-options">
-              <label><input type="radio" name="fulfilment" checked={fulfilment === "delivery"} onChange={() => { setFulfilment("delivery"); setReviewed(false); }} /> Delivery</label>
-              <label><input type="radio" name="fulfilment" checked={fulfilment === "pickup"} onChange={() => { setFulfilment("pickup"); setReviewed(false); }} /> Pick up in store</label>
+              <label><input type="radio" name="fulfilment" checked={fulfilment === "delivery"} onChange={() => { setFulfilment("delivery"); setRequestKey(""); setErrorMessage(""); }} /> Delivery</label>
+              <label><input type="radio" name="fulfilment" checked={fulfilment === "pickup"} onChange={() => { setFulfilment("pickup"); setRequestKey(""); setErrorMessage(""); }} /> Pick up in store</label>
             </div>
             {fulfilment === "delivery" ? (
               <div className="checkout-fields">
@@ -63,28 +139,23 @@ export default function CheckoutPage() {
                 <label>City / town<input autoComplete="address-level2" required maxLength={100} value={customer.city} onChange={(e) => update("city", e.target.value)} /></label>
                 <label>State<input autoComplete="address-level1" required maxLength={100} value={customer.state} onChange={(e) => update("state", e.target.value)} /></label>
               </div>
-            ) : <p className="checkout-note">Pickup location and collection instructions will be confirmed by the store before an order is accepted.</p>}
+            ) : <p className="checkout-note">Pickup is subject to the store's checkout settings and confirmation.</p>}
             <label>Order notes <span>(optional)</span><textarea rows={3} maxLength={1000} value={customer.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Delivery instructions or product questions" /></label>
           </section>
-          <div className="checkout-safety-note"><strong>Not live yet</strong><p>Reviewing these details does not send them to the store. Order submission, stock reservation, delivery fees and payment verification must be connected and tested before this can accept orders.</p></div>
-          <button className="button primary" type="submit">Review details</button>
-          {reviewed && (
-            <div className="checkout-review" role="status">
-              <h2>Details reviewed</h2>
-              <p><strong>{customer.name}</strong> · {customer.phone}</p>
-              <p>{fulfilment === "delivery" ? [customer.address, customer.city, customer.state].filter(Boolean).join(", ") : "Store pickup requested"}</p>
-              <p>Cart: {itemCount} item(s), current browser subtotal {money.format(subtotal)}.</p>
-              <p>This is a local preview only. No order has been created and no payment has been taken.</p>
-            </div>
-          )}
+          <div className="checkout-safety-note"><strong>Payment is not enabled here</strong><p>Submitting can create an unpaid order only when the store's database has checkout enabled. No online payment is taken by this form.</p></div>
+          {errorMessage && <div className="checkout-safety-note" role="alert"><strong>Order not confirmed</strong><p>{errorMessage}</p></div>}
+          <button className="button primary" type="submit" disabled={submitting}>
+            {submitting ? "Submitting order…" : "Submit order request"}
+          </button>
         </form>
         <aside className="cart-summary">
           <h2>Order summary</h2>
           {items.map((item) => <div key={item.productId}><span>{item.name} × {item.quantity}</span><strong>{money.format(item.price * item.quantity)}</strong></div>)}
-          <div className="cart-summary-total"><span>Subtotal</span><strong>{money.format(subtotal)}</strong></div>
-          <div><span>Delivery</span><small>Not calculated</small></div>
-          <p>Prices and availability must be confirmed by the server before an order can be accepted. This subtotal is not a final quotation.</p>
+          <div className="cart-summary-total"><span>Browser subtotal (estimate)</span><strong>{money.format(subtotal)}</strong></div>
+          <div><span>Delivery</span><small>Confirmed by store settings</small></div>
+          <p>The server calculates the final total from database prices. Browser prices are estimates and may differ.</p>
           <Link className="button secondary checkout-back" href="/cart">Edit cart</Link>
+          <small>{itemCount} item(s) in this request.</small>
         </aside>
       </div>
     </main>
