@@ -400,7 +400,6 @@ $$;
 
 revoke all on function private.release_expired_inventory_reservations(integer) from public, anon, authenticated;
 
-commit;
 ) then
     raise exception 'Invalid email address' using errcode = '22023';
   end if;
