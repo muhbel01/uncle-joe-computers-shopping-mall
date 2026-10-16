@@ -91,7 +91,7 @@ begin
   if v_note is not null and length(v_note) > 1000 then
     raise exception 'Order notes are too long' using errcode = '22023';
   end if;
-  if v_email is not null and v_email !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' then
+  if v_email is not null and (length(v_email) > 254 or v_email !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$') then
     raise exception 'Invalid email address' using errcode = '22023';
   end if;
   if v_fulfilment is null or v_fulfilment not in ('delivery', 'pickup') then
