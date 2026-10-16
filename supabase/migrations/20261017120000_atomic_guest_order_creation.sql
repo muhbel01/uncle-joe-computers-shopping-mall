@@ -345,8 +345,8 @@ begin
     join public.orders o on o.id = r.order_id
     where r.status = 'reserved'
       and r.expires_at <= now()
-      and o.payment_status <> 'paid'
-      and o.order_status not in ('cancelled', 'returned')
+      and o.payment_status is distinct from 'paid'
+      and o.order_status = 'pending'
     order by r.expires_at, r.id
     limit p_batch_size
     for update of r skip locked
@@ -377,7 +377,7 @@ begin
     update public.orders o
       set order_status = 'cancelled', updated_at = now()
       where o.id = v_reservation.order_id
-        and o.payment_status <> 'paid'
+        and o.payment_status is distinct from 'paid'
         and o.order_status = 'pending'
         and not exists (
           select 1
