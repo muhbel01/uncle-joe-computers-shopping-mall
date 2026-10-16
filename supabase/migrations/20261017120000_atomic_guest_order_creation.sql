@@ -100,8 +100,10 @@ begin
     raise exception 'Complete the delivery address' using errcode = '22023';
   end if;
 
-  if jsonb_typeof(p_payload->'items') <> 'array'
-     or jsonb_array_length(p_payload->'items') < 1
+  if coalesce(jsonb_typeof(p_payload->'items'), '') <> 'array' then
+    raise exception 'Cart items must be an array' using errcode = '22023';
+  end if;
+  if jsonb_array_length(p_payload->'items') < 1
      or jsonb_array_length(p_payload->'items') > 50 then
     raise exception 'Cart must contain between 1 and 50 items' using errcode = '22023';
   end if;
