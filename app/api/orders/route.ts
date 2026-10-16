@@ -46,6 +46,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Please check your checkout details and try again." }, { status: 400 });
       }
 
+      if (error.code === "55000") {
+        return NextResponse.json({
+          error: "Online checkout is not enabled for this store yet. Please contact the store before placing an order.",
+        }, { status: 503 });
+      }
+
       return NextResponse.json({ error: genericFailure }, { status: 500 });
     }
 
