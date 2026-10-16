@@ -13,6 +13,7 @@
 - [ ] Malformed JSON returns HTTP 400 without exposing server details.
 - [ ] Missing or malformed request key returns HTTP 400.
 - [ ] Missing customer name/phone, invalid phone/email, or oversized fields return HTTP 400.
+- [ ] A valid email such as `buyer@example.com` passes database validation; an invalid domain format is rejected.
 - [ ] Delivery without address, city, or state returns HTTP 400.
 - [ ] Pickup requests do not require a delivery address.
 - [ ] Empty carts, more than 50 lines, duplicate product IDs, non-UUID product IDs, and fractional/zero/negative/over-limit quantities are rejected.
