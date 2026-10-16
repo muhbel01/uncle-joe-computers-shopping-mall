@@ -4,6 +4,27 @@
 
 begin;
 
+-- Checkout is closed by default. An authorised operator must explicitly enable it
+-- and configure the supported fulfilment methods before any guest order can be placed.
+create table if not exists public.checkout_settings (
+  id boolean primary key default true check (id),
+  guest_checkout_enabled boolean not null default false,
+  pickup_enabled boolean not null default false,
+  delivery_enabled boolean not null default false,
+  default_delivery_fee numeric(12,2) check (default_delivery_fee is null or default_delivery_fee >= 0),
+  updated_at timestamptz not null default now(),
+  constraint checkout_delivery_fee_required check (
+    not delivery_enabled or default_delivery_fee is not null
+  )
+);
+
+insert into public.checkout_settings (id)
+values (true)
+on conflict (id) do nothing;
+
+alter table public.checkout_settings enable row level security;
+revoke all on table public.checkout_settings from public, anon, authenticated;
+
 create table if not exists public.inventory_reservations (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references public.orders(id) on delete cascade,
@@ -51,6 +72,8 @@ declare
   v_line record;
   v_product public.products%rowtype;
   v_count integer := 0;
+  v_settings public.checkout_settings%rowtype;
+  v_delivery_fee numeric(12,2) := 0;
 begin
   if p_payload is null or jsonb_typeof(p_payload) <> 'object' then
     raise exception 'Invalid checkout request' using errcode = '22023';
@@ -97,6 +120,26 @@ begin
   if v_fulfilment is null or v_fulfilment not in ('delivery', 'pickup') then
     raise exception 'Choose delivery or pickup' using errcode = '22023';
   end if;
+
+  select * into v_settings
+  from public.checkout_settings s
+  where s.id = true;
+
+  if not found or not v_settings.guest_checkout_enabled then
+    raise exception 'Guest checkout is not enabled for this store' using errcode = '55000';
+  end if;
+
+  if v_fulfilment = 'pickup' and not v_settings.pickup_enabled then
+    raise exception 'Store pickup is not configured' using errcode = '55000';
+  end if;
+
+  if v_fulfilment = 'delivery' then
+    if not v_settings.delivery_enabled or v_settings.default_delivery_fee is null then
+      raise exception 'Delivery is not configured for this store' using errcode = '55000';
+    end if;
+    v_delivery_fee := v_settings.default_delivery_fee;
+  end if;
+
   if v_fulfilment = 'delivery' and (
     nullif(trim(coalesce(v_address->>'address','')), '') is null or
     nullif(trim(coalesce(v_address->>'city','')), '') is null or
@@ -196,6 +239,8 @@ begin
     raise exception 'Cart is empty' using errcode = '22023';
   end if;
 
+  v_total := v_subtotal + v_delivery_fee;
+
   v_order_number := 'UJ-' || to_char(now() at time zone 'UTC', 'YYYYMMDD') || '-' ||
     upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 10));
 
@@ -206,7 +251,7 @@ begin
   ) values (
     v_order_number, v_name, v_email, v_phone,
     case when v_fulfilment = 'delivery' then v_address else '{}'::jsonb end,
-    v_subtotal, 0, 0, v_subtotal, 'NGN', 'pending', 'unpaid', v_note, v_fulfilment, v_key
+    v_subtotal, v_delivery_fee, 0, v_total, 'NGN', 'pending', 'unpaid', v_note, v_fulfilment, v_key
   ) returning id into v_order_id;
 
   for v_line in
@@ -242,7 +287,7 @@ begin
 
   order_id := v_order_id;
   order_number := v_order_number;
-  order_total := v_subtotal;
+  order_total := v_total;
   currency := 'NGN';
   return next;
 exception
