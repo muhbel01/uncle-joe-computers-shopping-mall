@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
-// Do not bake a retailer-specific production domain into this reusable template.\nconst siteUrl = (
+// Do not bake a retailer-specific production domain into this reusable template.
+const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL ||
   "http://localhost:3000"
 ).replace(/\/$/, "");
