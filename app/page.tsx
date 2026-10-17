@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import type { StoreProduct } from "@/components/product-grid";
 import { storeConfig } from "@/lib/store-config";
 import { getPublicSupabaseClient } from "@/lib/supabase/public";
 
@@ -17,9 +19,16 @@ const categories = [
 
 export const revalidate = 60;
 
+const naira = new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: storeConfig.currency,
+  maximumFractionDigits: 0,
+});
+
 export default async function HomePage() {
   type StoreCategoryCard = { icon: string; title: string; slug: string; text: string };
   let visibleCategories: StoreCategoryCard[] = categories;
+  let featuredProducts: StoreProduct[] = [];
   const supabase = getPublicSupabaseClient();
 
   if (supabase) {
@@ -41,6 +50,24 @@ export default async function HomePage() {
         };
       });
     }
+
+    const { data: featuredData } = await supabase
+      .from("products")
+      .select("id,name,slug,brand,condition,price,stock_quantity,warranty_description,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
+      .eq("is_active", true)
+      .eq("is_featured", true)
+      .gt("stock_quantity", 0)
+      .order("updated_at", { ascending: false })
+      .limit(4);
+
+    featuredProducts = ((featuredData ?? []) as unknown as Array<StoreProduct & { images?: { storage_path: string; alt_text: string | null; sort_order: number }[] }>).map((product) => {
+      const first = [...(product.images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0];
+      return {
+        ...product,
+        image_url: first ? supabase.storage.from("product-images").getPublicUrl(first.storage_path).data.publicUrl : null,
+        image_alt: first?.alt_text ?? product.name,
+      };
+    });
   }
 
   return (
@@ -105,8 +132,26 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="featured" className="featured">
-        <div className="container featured-inner"><div><span className="eyebrow">COMING INTO FOCUS</span><h2>Good tech starts with the right advice.</h2><p>Our catalogue is being prepared. Soon you&apos;ll be able to browse available stock, compare product conditions and place an order online.</p></div><div className="catalogue-placeholder"><span>✦</span><strong>Our product catalogue</strong><small>Products will appear here as inventory is added.</small></div></div>
+      <section id="featured" className="section container">
+        <div className="section-heading"><div><span className="eyebrow">STAFF PICKS</span><h2>Featured products</h2></div><p>Explore selected items currently published and in stock.</p></div>
+        {featuredProducts.length > 0 ? (
+          <div className="product-grid">
+            {featuredProducts.map((product) => (
+              <article className="product-card" key={product.id}>
+                {product.image_url ? <div className="product-art product-art-photo"><Image src={product.image_url} alt={product.image_alt || product.name} width={480} height={320} unoptimized /></div> : <div className="product-art" aria-hidden="true">{storeConfig.shortName.slice(0, 2).toUpperCase()}</div>}
+                <div className="product-card-body">
+                  {product.category?.name && <small className="product-category">{product.category.name}</small>}
+                  <h3><Link href={`/products/${product.slug}`}>{product.name}</Link></h3>
+                  <p className="product-meta">{product.brand || "Quality tech"} · {product.condition === "new" ? "New" : product.condition === "used" ? "Used" : "Refurbished"}</p>
+                  <strong className="product-price">{naira.format(product.price)}</strong>
+                  <small className="stock available">In stock</small>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="catalogue-placeholder"><span>✦</span><strong>Featured products will appear here</strong><small>When the store publishes featured items that are in stock, they will be shown in this section.</small><Link className="button secondary" href="/products">Browse all products</Link></div>
+        )}
       </section>
 
       <section id="how-it-works" className="section container">
