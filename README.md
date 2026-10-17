@@ -22,12 +22,15 @@ See `.env.example`. Never commit real `.env.local` files, service-role keys, Pay
 Migrations are stored in `supabase/migrations/`. The connected Supabase project has the initial schema, seeded categories, staff self-role access, staff catalogue policies and inventory adjustment RPC applied. Row Level Security is enabled on public tables. Product creation is restricted to super admins/managers. Inventory adjustments are restricted to super admins, managers and inventory staff; stock changes use a row lock and record an inventory movement plus audit-log entry in one database transaction.
 
 ## Current status
-- Public storefront, catalogue, category, search and product-detail routes are implemented.
+- Public storefront, catalogue, category, product detail, cart, and product search/filter/sort are implemented.
 - Staff email/password login and server-side role checks are implemented; a real staff account still needs to be provisioned and end-to-end tested.
 - The staff product/inventory workspace supports product creation and editing, draft/published status, low-stock thresholds, stock movements, and a product register.
-- Managers can upload and remove JPG, PNG and WebP product images (maximum 5 MB each) through a role-restricted Supabase Storage bucket; published product images display in the storefront. Security advisor currently reports no findings.
-- No product inventory has been imported yet. The product list is intentionally empty until the real inventory sheet is supplied.
-- Checkout, order creation, Paystack, shipping calculations, image uploads, staff provisioning and WhatsApp support are not production-ready.
+- Managers can upload and remove JPG, PNG and WebP product images (maximum 5 MB each) through a role-restricted Supabase Storage bucket; published product images display in the storefront.
+- Checkout form is connected to the order API. Checkout migrations and core transactional tests pass in an isolated PostgreSQL 16 GitHub Actions job; application type check, lint and production build passed on the last verified application commit.
+- The connected Supabase project has not been migrated for guest checkout. Guest checkout defaults to disabled; do not accept live orders.
+- No product inventory has been imported yet. The catalogue should remain empty until a verified real inventory sheet is supplied.
+- Paystack/payment verification, production end-to-end checkout tests, scheduled reservation expiry, delivery rules, production security review, staff provisioning and WhatsApp support are not production-ready.
+- See `docs/SECURE_ORDER_CREATION_PLAN.md`, `docs/CHECKOUT_TEST_PLAN.md`, and `docs/REUSABLE_STOREFRONT_LAUNCH_CHECKLIST.md` for release gates.
 
 ## Important implementation rules
 - Recalculate prices and stock on the server; never trust totals supplied by a browser.
