@@ -18,7 +18,7 @@ export default async function SearchPage({ searchParams }: Props) {
   let searchConfigured = Boolean(supabase);
 
   if (supabase && term.length >= 2) {
-    const safeTerm = term.replace(/[,%()]/g, " ").replace(/\s+/g, " ").trim();
+    const safeTerm = term.replace(/[^\p{L}\p{N}\s-]/gu, " ").replace(/\s+/g, " ").trim();
     if (safeTerm) {
       try {
         const { data, error } = await supabase
