@@ -74,7 +74,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">, quantity = 1) => {
     if (item.stockQuantity < 1) return;
-    const amount = Math.max(1, Math.min(Math.floor(quantity), item.stockQuantity));
+    const requested = Number.isFinite(quantity) ? Math.floor(quantity) : 1;
+    const amount = Math.max(1, Math.min(requested, item.stockQuantity));
     setItems((current) => {
       const existing = current.find((entry) => entry.productId === item.productId);
       if (!existing) return [...current, { ...item, quantity: amount }];
@@ -85,6 +86,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setQuantity = useCallback((productId: string, quantity: number) => {
+    if (!Number.isFinite(quantity)) return;
     setItems((current) => current.flatMap((item) => {
       if (item.productId !== productId) return [item];
       if (quantity <= 0 || item.stockQuantity <= 0) return [];
