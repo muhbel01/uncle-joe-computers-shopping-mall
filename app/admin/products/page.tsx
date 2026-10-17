@@ -2,9 +2,10 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/admin/require-staff";
 import { createProduct, updateProduct, adjustStock } from "./actions";
 import { ProductImageManager } from "@/components/admin/product-image-manager";
+import { storeConfig } from "@/lib/store-config";
 
 export const dynamic = "force-dynamic";
-const money = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 });
+const money = new Intl.NumberFormat(storeConfig.language, { style: "currency", currency: storeConfig.currency, maximumFractionDigits: 0 });
 const roleLabels: Record<string, string> = {
   super_admin: "Super Admin", manager: "Manager", inventory_staff: "Inventory Staff", order_staff: "Order Staff",
 };
