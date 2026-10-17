@@ -48,7 +48,7 @@ The environment variables brand the public UI and metadata; they do not automati
 
 ## Important implementation rules
 - Recalculate prices and stock on the server; never trust totals supplied by a browser.
-- Verify Paystack payments server-side and process webhooks idempotently.
+- Verify Paystack payments server-side and process webhooks idempotently. The payment-confirmation path must lock the order row, refuse to mark a cancelled order paid, and coordinate with reservation expiry before any payment flow is enabled.
 - Do not expose service-role or payment secret keys to the client.
 - Review RLS policies and test access boundaries before production.
 - Never add fabricated products or stock counts to make the storefront look populated.
