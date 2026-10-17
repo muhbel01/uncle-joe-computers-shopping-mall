@@ -319,14 +319,13 @@ returns table(order_id uuid, order_number text, order_total numeric, currency te
 language sql
 security definer
 set search_path = ''
-as $
+as $wrapper$
   select * from private.create_guest_order(p_payload);
-$;
+$wrapper$;
 
 revoke all on function public.create_guest_order(jsonb) from public;
 grant execute on function public.create_guest_order(jsonb) to anon, authenticated;
 revoke all on function private.create_guest_order(jsonb) from public, anon, authenticated;
-
 
 -- Trusted stock-release routine. It is deliberately not callable by browser roles.
 -- A scheduler must invoke this periodically after the migration is reviewed and applied.
