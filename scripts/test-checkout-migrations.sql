@@ -33,6 +33,17 @@ begin
     raise exception 'TEST FAILED: browser role can execute the private reservation-release function';
   end if;
 
+  if has_table_privilege('anon', 'public.inventory_reservations', 'SELECT')
+     or has_table_privilege('anon', 'public.inventory_reservations', 'INSERT')
+     or has_table_privilege('anon', 'public.inventory_reservations', 'UPDATE')
+     or has_table_privilege('anon', 'public.inventory_reservations', 'DELETE')
+     or has_table_privilege('authenticated', 'public.inventory_reservations', 'SELECT')
+     or has_table_privilege('authenticated', 'public.inventory_reservations', 'INSERT')
+     or has_table_privilege('authenticated', 'public.inventory_reservations', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.inventory_reservations', 'DELETE') then
+    raise exception 'TEST FAILED: browser role has direct privileges on inventory reservations';
+  end if;
+
   insert into public.products (
     id, name, slug, sku, condition, price, stock_quantity, is_active
   ) values (
