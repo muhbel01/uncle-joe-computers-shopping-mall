@@ -125,7 +125,7 @@ export default async function HomePage() {
           </div>
           <div className="hero-art" aria-label="Technology product illustration" role="img">
             <div className="glow" />
-            <div className="laptop"><div className="laptop-screen"><span>{storeConfig.shortName.slice(0, 2).toUpperCase()}</span><small>SMARTER TECH. BETTER VALUE.</small></div><div className="laptop-base" /></div>
+            <div className="laptop"><div className="laptop-screen"><span>{storeConfig.shortName.slice(0, 2).toUpperCase()}</span><small>{storeConfig.tagline.toUpperCase()}</small></div><div className="laptop-base" /></div>
             <div className="phone"><div className="phone-screen"><span>●</span><b>TECH</b><small>made simple</small></div></div>
             <div className="floating-card">⚡ Reliable power</div>
             <div className="floating-chip">Genuine advice. Great choice.</div>
