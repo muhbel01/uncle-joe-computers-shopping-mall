@@ -19,7 +19,7 @@ const categories = [
 
 export const revalidate = 60;
 
-const naira = new Intl.NumberFormat("en-NG", {
+const naira = new Intl.NumberFormat(storeConfig.language, {
   style: "currency",
   currency: storeConfig.currency,
   maximumFractionDigits: 0,
