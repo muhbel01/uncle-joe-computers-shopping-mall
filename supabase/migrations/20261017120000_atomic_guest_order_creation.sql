@@ -311,22 +311,21 @@ exception
 end;
 $$;
 
--- The exposed public RPC is an invoker-only wrapper. Privileged work stays in the
--- non-exposed private schema, and the private implementation has a fixed search path.
+-- The public RPC is the only browser-facing entry point. SECURITY DEFINER
+-- allows it to invoke the private implementation without granting browser roles
+-- access to the private schema or function directly. Both functions pin search_path.
 create or replace function public.create_guest_order(p_payload jsonb)
 returns table(order_id uuid, order_number text, order_total numeric, currency text)
 language sql
-security invoker
+security definer
 set search_path = ''
-as $$
+as $
   select * from private.create_guest_order(p_payload);
-$$;
+$;
 
 revoke all on function public.create_guest_order(jsonb) from public;
 grant execute on function public.create_guest_order(jsonb) to anon, authenticated;
-grant usage on schema private to anon, authenticated;
-revoke all on function private.create_guest_order(jsonb) from public;
-grant execute on function private.create_guest_order(jsonb) to anon, authenticated;
+revoke all on function private.create_guest_order(jsonb) from public, anon, authenticated;
 
 
 -- Trusted stock-release routine. It is deliberately not callable by browser roles.
