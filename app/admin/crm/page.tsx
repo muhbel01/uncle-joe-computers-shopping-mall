@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/admin/require-staff";
 import { createCustomer, updateCustomer, logCustomerActivity } from "./actions";
+import { storeConfig } from "@/lib/store-config";
 
 export const dynamic = "force-dynamic";
-const dateTime = (value: string | null) => value ? new Date(value).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" }) : "—";
+const dateTime = (value: string | null) => value ? new Date(value).toLocaleString(storeConfig.language, { dateStyle: "medium", timeStyle: "short" }) : "—";
 const stages = ["lead", "prospect", "customer", "repeat_customer", "inactive"] as const;
 const types = ["retail", "business", "wholesale", "corporate"] as const;
 
@@ -54,8 +55,8 @@ export default async function AdminCrmPage({ searchParams }: { searchParams: Pro
         <label>Stage<select name="lifecycle_stage" defaultValue="lead">{stages.map(t => <option key={t} value={t}>{t.replaceAll("_", " ")}</option>)}</select></label>
         <label>How they found us<input name="source" maxLength={100} placeholder="Walk-in, WhatsApp, referral, website" /></label>
         <label>Preferred contact<select name="preferred_contact" defaultValue="whatsapp"><option value="whatsapp">WhatsApp</option><option value="phone">Phone call</option><option value="email">Email</option><option value="in_person">In person</option></select></label>
-        <label>City<input name="city" maxLength={100} defaultValue="Osogbo" /></label>
-        <label>State<input name="state" maxLength={100} defaultValue="Osun" /></label>
+        <label>City<input name="city" maxLength={100} defaultValue={storeConfig.city} /></label>
+        <label>State<input name="state" maxLength={100} defaultValue={storeConfig.state} /></label>
         <label>Assign to<select name="assigned_to" defaultValue=""><option value="">Unassigned</option>{(staff ?? []).map(s => <option key={s.user_id} value={s.user_id}>{staffName.get(s.user_id)} · {s.user_id.slice(0, 8)}</option>)}</select></label>
         <label>Next follow-up<input name="next_follow_up_at" type="datetime-local" /></label>
         <label className="span-two">Internal notes<textarea name="internal_notes" rows={2} maxLength={2000} placeholder="Product interest, quotation status, service preferences…" /></label>
