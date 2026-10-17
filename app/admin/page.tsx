@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { hasSupabasePublicConfig } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import { storeConfig } from "@/lib/store-config";
 
 export const dynamic = "force-dynamic";
 const roleLabels: Record<string, string> = { super_admin: "Super Admin", manager: "Manager", inventory_staff: "Inventory Staff", order_staff: "Order Staff" };
@@ -18,7 +19,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const canUseCRM = ["super_admin", "manager", "order_staff"].includes(staff.role);
 
   return <main className="page-shell"><section className="container page-heading admin-dashboard">
-    <Link href="/" className="back-link">← View shop</Link><span className="eyebrow">UNCLE JOE COMPUTERS · STAFF WORKSPACE</span>
+    <Link href="/" className="back-link">← View shop</Link><span className="eyebrow">{storeConfig.shortName} · STAFF WORKSPACE</span>
     <h1>Admin dashboard</h1><p>Signed in as {user.email ?? "authorised staff"} · {roleLabels[staff.role] ?? staff.role}</p>
     {params.reason === "insufficient-permissions" && <p className="admin-flash error" role="alert">Your staff role does not have permission to open that workspace.</p>}
     <div className="admin-notice"><strong>Staff access verified</strong><p>Catalogue permissions are role-restricted. Stock changes are applied atomically and recorded in inventory movements and the audit log.</p></div>

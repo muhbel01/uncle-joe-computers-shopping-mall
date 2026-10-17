@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireStaff } from "@/lib/admin/require-staff";
+import { parseStoreDateTimeInput } from "@/lib/store-datetime";
 
 const customerSchema = z.object({
   full_name: z.string().trim().min(2).max(160),
@@ -36,9 +37,9 @@ export async function createCustomer(formData: FormData) {
   const v = parsed.data;
   let followUp: string | null = null;
   if (v.next_follow_up_at) {
-    const date = new Date(v.next_follow_up_at);
-    if (Number.isNaN(date.getTime())) redirect("/admin/crm?error=invalid-customer");
-    followUp = date.toISOString();
+    const date = parseStoreDateTimeInput(v.next_follow_up_at);
+    if (!date) redirect("/admin/crm?error=invalid-customer");
+    followUp = date;
   }
   const { error } = await supabase.from("crm_customers").insert({
     full_name: v.full_name, phone: v.phone || null, email: v.email || null,
@@ -61,9 +62,9 @@ export async function updateCustomer(formData: FormData) {
   if (!id.success || !stage.success || !assigned.success || !follow.success) redirect("/admin/crm?error=invalid-customer");
   let nextFollowUp: string | null = null;
   if (follow.data) {
-    const date = new Date(follow.data);
-    if (Number.isNaN(date.getTime())) redirect("/admin/crm?error=invalid-customer");
-    nextFollowUp = date.toISOString();
+    const date = parseStoreDateTimeInput(follow.data);
+    if (!date) redirect("/admin/crm?error=invalid-customer");
+    nextFollowUp = date;
   }
   const { error } = await supabase.from("crm_customers").update({
     lifecycle_stage: stage.data, assigned_to: assigned.data || null,
@@ -84,9 +85,9 @@ export async function logCustomerActivity(formData: FormData) {
   if (!customerId.success || !type.success || !summary.success || !outcome.success || !follow.success) redirect("/admin/crm?error=invalid-activity");
   let nextFollowUp: string | null = null;
   if (follow.data) {
-    const date = new Date(follow.data);
-    if (Number.isNaN(date.getTime())) redirect("/admin/crm?error=invalid-activity");
-    nextFollowUp = date.toISOString();
+    const date = parseStoreDateTimeInput(follow.data);
+    if (!date) redirect("/admin/crm?error=invalid-activity");
+    nextFollowUp = date;
   }
   const { error } = await supabase.from("crm_activities").insert({
     customer_id: customerId.data, activity_type: type.data, summary: summary.data,

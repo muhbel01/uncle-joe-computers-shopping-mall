@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { storeConfig } from "@/lib/store-config";
 
 export const metadata: Metadata = {
   title: "Tech Guides",
-  description: "Practical buying and setup guides for laptops, used computers, Wi-Fi routers, device care and backup power from Uncle Joe Computers Shopping Mall.",
+  description: `Practical buying and setup guides from ${storeConfig.name}, covering computers, networking, device care and backup power.`,
 };
 
 const guides = [
@@ -81,7 +82,7 @@ export default function GuidesPage() {
       <header className="guides-hero">
         <div className="container">
           <div className="guides-breadcrumb"><Link href="/">Home</Link><span> / </span><span>Tech Guides</span></div>
-          <span className="eyebrow">THE UNCLE JOE KNOW-HOW HUB</span>
+          <span className="eyebrow">THE TECH KNOW-HOW HUB</span>
           <h1>Make a smarter tech choice.</h1>
           <p>Clear, practical advice to help you choose devices, take care of your equipment and understand the questions to ask before you buy. We’ll keep adding guides as the store grows.</p>
         </div>
@@ -103,7 +104,7 @@ export default function GuidesPage() {
         <aside className="guide-note"><strong>Power and electrical safety:</strong> This page is general buying guidance, not a substitute for a site assessment. Do not open mains-powered equipment or attempt electrical installation yourself. Use a qualified professional for wiring, protection and commissioning.</aside>
         <div className="guides-cta"><div><h2>Still comparing your options?</h2><p>Browse the store categories or return to the homepage for updates as the catalogue develops.</p></div><Link className="button primary" href="/products">Browse products <span aria-hidden="true">→</span></Link></div>
       </section>
-      <footer className="footer"><div className="container footer-inner"><div><Link className="brand footer-brand" href="/"><span className="brand-mark">UJ</span><span><strong>UNCLE JOE</strong><small>COMPUTERS SHOPPING MALL</small></span></Link><p>Your technology shopping partner in Osogbo, Osun State, Nigeria.</p></div><div><strong>Customer care</strong><p>Contact details and WhatsApp support will be added before launch.</p><small>Online checkout is not active yet.</small></div></div><div className="container copyright">© {new Date().getFullYear()} Uncle Joe Computers Shopping Mall. All rights reserved.</div></footer>
+      <footer className="footer"><div className="container footer-inner"><div><Link className="brand footer-brand" href="/"><span className="brand-mark">{storeConfig.shortName.slice(0, 2).toUpperCase()}</span><span><strong>{storeConfig.name}</strong><small>{storeConfig.shortName}</small></span></Link><p>Your technology shopping partner in {storeConfig.location}.</p></div><div><strong>Customer care</strong><p>Contact details and WhatsApp support will be added before launch.</p><small>Online checkout is not active yet.</small></div></div><div className="container copyright">© {new Date().getFullYear()} {storeConfig.name}. All rights reserved.</div></footer>
     </main>
   );
 }
