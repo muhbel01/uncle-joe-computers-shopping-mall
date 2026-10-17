@@ -17,6 +17,22 @@ declare
   v_released integer;
   v_rejected boolean;
 begin
+  -- Verify the browser-facing role grants after migrations are applied.
+  if not has_function_privilege('anon', 'public.create_guest_order(jsonb)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.create_guest_order(jsonb)', 'EXECUTE') then
+    raise exception 'TEST FAILED: public guest-order RPC is not executable by browser roles';
+  end if;
+
+  if has_function_privilege('anon', 'private.create_guest_order(jsonb)', 'EXECUTE')
+     or has_function_privilege('authenticated', 'private.create_guest_order(jsonb)', 'EXECUTE') then
+    raise exception 'TEST FAILED: browser role can execute the private guest-order function';
+  end if;
+
+  if has_function_privilege('anon', 'private.release_expired_inventory_reservations(integer)', 'EXECUTE')
+     or has_function_privilege('authenticated', 'private.release_expired_inventory_reservations(integer)', 'EXECUTE') then
+    raise exception 'TEST FAILED: browser role can execute the private reservation-release function';
+  end if;
+
   insert into public.products (
     id, name, slug, sku, condition, price, stock_quantity, is_active
   ) values (
