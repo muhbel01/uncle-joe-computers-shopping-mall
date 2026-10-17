@@ -10,6 +10,34 @@ function publicValue(value: string | undefined, fallback: string): string {
   return trimmed ? trimmed : fallback;
 }
 
+function supportedLanguage(value: string | undefined, fallback = "en-NG"): string {
+  const candidate = publicValue(value, fallback);
+  try {
+    return Intl.DateTimeFormat(candidate).resolvedOptions().locale;
+  } catch {
+    return fallback;
+  }
+}
+
+function supportedCurrency(value: string | undefined, fallback = "NGN"): string {
+  const candidate = publicValue(value, fallback).toUpperCase();
+  try {
+    new Intl.NumberFormat("en", { style: "currency", currency: candidate });
+    return candidate;
+  } catch {
+    return fallback;
+  }
+}
+
+function supportedTimeZone(value: string | undefined, fallback = "Africa/Lagos"): string {
+  const candidate = publicValue(value, fallback);
+  try {
+    return new Intl.DateTimeFormat("en", { timeZone: candidate }).resolvedOptions().timeZone;
+  } catch {
+    return fallback;
+  }
+}
+
 export const storeConfig = {
   name: publicValue(process.env.NEXT_PUBLIC_STORE_NAME, "Demo Tech Store"),
   shortName: publicValue(process.env.NEXT_PUBLIC_STORE_SHORT_NAME, "DEMO TECH"),
@@ -26,12 +54,12 @@ export const storeConfig = {
     "http://localhost:3000",
   ),
   locale: publicValue(process.env.NEXT_PUBLIC_STORE_LOCALE, "en_NG"),
-  language: publicValue(process.env.NEXT_PUBLIC_STORE_LANGUAGE, "en-NG"),
-  currency: publicValue(process.env.NEXT_PUBLIC_STORE_CURRENCY, "NGN"),
+  language: supportedLanguage(process.env.NEXT_PUBLIC_STORE_LANGUAGE),
+  currency: supportedCurrency(process.env.NEXT_PUBLIC_STORE_CURRENCY),
   location: publicValue(process.env.NEXT_PUBLIC_STORE_LOCATION, "Nigeria"),
   city: publicValue(process.env.NEXT_PUBLIC_STORE_CITY, ""),
   state: publicValue(process.env.NEXT_PUBLIC_STORE_STATE, ""),
-  timeZone: publicValue(process.env.NEXT_PUBLIC_STORE_TIME_ZONE, "Africa/Lagos"),
+  timeZone: supportedTimeZone(process.env.NEXT_PUBLIC_STORE_TIME_ZONE),
   // UI opt-in only; the database must independently enable checkout too.
   checkoutEnabled: process.env.NEXT_PUBLIC_CHECKOUT_ENABLED === "true",
 } as const;
