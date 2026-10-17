@@ -35,6 +35,41 @@ begin
     raise exception 'TEST FAILED: browser role can execute the private reservation-release function';
   end if;
 
+  if not exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'create_guest_order'
+      and p.prosecdef
+      and 'search_path=""' = any(p.proconfig)
+  ) then
+    raise exception 'TEST FAILED: public guest-order RPC must be SECURITY DEFINER with an empty search_path';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'private'
+      and p.proname = 'create_guest_order'
+      and p.prosecdef
+      and 'search_path=""' = any(p.proconfig)
+  ) then
+    raise exception 'TEST FAILED: private guest-order function must be SECURITY DEFINER with an empty search_path';
+  end if;
+
+  if has_table_privilege('anon', 'public.checkout_settings', 'SELECT')
+     or has_table_privilege('anon', 'public.checkout_settings', 'INSERT')
+     or has_table_privilege('anon', 'public.checkout_settings', 'UPDATE')
+     or has_table_privilege('anon', 'public.checkout_settings', 'DELETE')
+     or has_table_privilege('authenticated', 'public.checkout_settings', 'SELECT')
+     or has_table_privilege('authenticated', 'public.checkout_settings', 'INSERT')
+     or has_table_privilege('authenticated', 'public.checkout_settings', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.checkout_settings', 'DELETE') then
+    raise exception 'TEST FAILED: browser role has direct privileges on checkout settings';
+  end if;
+
   if has_table_privilege('anon', 'public.inventory_reservations', 'SELECT')
      or has_table_privilege('anon', 'public.inventory_reservations', 'INSERT')
      or has_table_privilege('anon', 'public.inventory_reservations', 'UPDATE')
