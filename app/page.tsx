@@ -29,6 +29,8 @@ export default async function HomePage() {
   type StoreCategoryCard = { icon: string; title: string; slug: string; text: string };
   let visibleCategories: StoreCategoryCard[] = categories;
   let featuredProducts: StoreProduct[] = [];
+  let categoryCatalogueUnavailable = false;
+  let featuredCatalogueUnavailable = false;
   const supabase = getPublicSupabaseClient();
 
   if (supabase) {
@@ -40,7 +42,10 @@ export default async function HomePage() {
         .order("sort_order", { ascending: true })
         .limit(10);
 
-      if (!error) {
+      if (error) {
+        categoryCatalogueUnavailable = true;
+        visibleCategories = [];
+      } else {
         // An empty active catalogue is different from a failed query: do not link to demo categories.
         visibleCategories = (data ?? []).map((category) => {
           const fallback = categories.find((item) => item.slug === category.slug);
@@ -53,7 +58,7 @@ export default async function HomePage() {
         });
       }
 
-      const { data: featuredData } = await supabase
+      const { data: featuredData, error: featuredError } = await supabase
         .from("products")
         .select("id,name,slug,brand,condition,price,stock_quantity,warranty_description,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
         .eq("is_active", true)
@@ -62,6 +67,7 @@ export default async function HomePage() {
         .order("updated_at", { ascending: false })
         .limit(4);
 
+      featuredCatalogueUnavailable = Boolean(featuredError);
       featuredProducts = ((featuredData ?? []) as unknown as Array<StoreProduct & { images?: { storage_path: string; alt_text: string | null; sort_order: number }[] }>).map((product) => {
         const first = [...(product.images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0];
         return {
@@ -71,8 +77,10 @@ export default async function HomePage() {
         };
       });
     } catch {
-      // Keep the storefront usable if the public catalogue service is temporarily unavailable.
-      visibleCategories = categories;
+      // Keep the storefront usable without linking to demo data during a catalogue outage.
+      categoryCatalogueUnavailable = true;
+      featuredCatalogueUnavailable = true;
+      visibleCategories = [];
       featuredProducts = [];
     }
   }
@@ -134,7 +142,9 @@ export default async function HomePage() {
 
       <section id="categories" className="section container">
         <div className="section-heading"><div><span className="eyebrow">FIND YOUR NEXT ESSENTIAL</span><h2>Shop by category</h2></div><p>Everything you need to stay productive, connected and powered.</p></div>
-        {visibleCategories.length > 0 ? (
+        {categoryCatalogueUnavailable ? (
+          <div className="catalogue-placeholder" role="status"><strong>Categories temporarily unavailable</strong><small>We couldn’t load the store catalogue right now. Please try again shortly.</small></div>
+        ) : visibleCategories.length > 0 ? (
           <div className="category-grid">
             {visibleCategories.map((category) => <Link className="category-card" href={"/category/" + category.slug} key={category.slug}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></Link>)}
           </div>
@@ -149,7 +159,9 @@ export default async function HomePage() {
 
       <section id="featured" className="section container">
         <div className="section-heading"><div><span className="eyebrow">STAFF PICKS</span><h2>Featured products</h2></div><p>Explore selected items currently published and in stock.</p></div>
-        {featuredProducts.length > 0 ? (
+        {featuredCatalogueUnavailable ? (
+          <div className="catalogue-placeholder" role="status"><strong>Featured products temporarily unavailable</strong><small>We couldn’t load featured products right now. Please try again shortly.</small><Link className="button secondary" href="/products">Browse all products</Link></div>
+        ) : featuredProducts.length > 0 ? (
           <div className="product-grid">
             {featuredProducts.map((product) => (
               <article className="product-card" key={product.id}>
