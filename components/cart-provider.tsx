@@ -37,7 +37,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (raw) {
         const parsed: unknown = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          const safe = parsed.filter((item): item is CartItem =>
+          const safeItems = parsed.filter((item): item is CartItem =>
             item &&
             typeof item.productId === "string" &&
             typeof item.slug === "string" &&
@@ -49,7 +49,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             (item.imageUrl == null || typeof item.imageUrl === "string")
           ).map((item) => ({ ...item, quantity: Math.min(item.quantity, item.stockQuantity) }))
             .filter((item) => item.quantity > 0);
-          setItems(safe);
+
+          // Repair duplicate product lines from older or malformed saved cart data.
+          const uniqueItems = new Map<string, CartItem>();
+          for (const item of safeItems) {
+            const existing = uniqueItems.get(item.productId);
+            uniqueItems.set(item.productId, {
+              ...item,
+              quantity: Math.min(
+                item.stockQuantity,
+                item.quantity + (existing?.quantity ?? 0),
+              ),
+            });
+          }
+          setItems([...uniqueItems.values()]);
         }
       }
     } catch {
