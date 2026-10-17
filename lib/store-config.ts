@@ -31,6 +31,7 @@ export const storeConfig = {
   location: publicValue(process.env.NEXT_PUBLIC_STORE_LOCATION, "Nigeria"),
   city: publicValue(process.env.NEXT_PUBLIC_STORE_CITY, ""),
   state: publicValue(process.env.NEXT_PUBLIC_STORE_STATE, ""),
+  timeZone: publicValue(process.env.NEXT_PUBLIC_STORE_TIME_ZONE, "Africa/Lagos"),
   // UI opt-in only; the database must independently enable checkout too.
   checkoutEnabled: process.env.NEXT_PUBLIC_CHECKOUT_ENABLED === "true",
 } as const;

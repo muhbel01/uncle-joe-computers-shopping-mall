@@ -2,9 +2,9 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/admin/require-staff";
 import { createCustomer, updateCustomer, logCustomerActivity } from "./actions";
 import { storeConfig } from "@/lib/store-config";
+import { formatStoreDateTime, toStoreDateTimeInput } from "@/lib/store-datetime";
 
 export const dynamic = "force-dynamic";
-const dateTime = (value: string | null) => value ? new Date(value).toLocaleString(storeConfig.language, { dateStyle: "medium", timeStyle: "short" }) : "—";
 const stages = ["lead", "prospect", "customer", "repeat_customer", "inactive"] as const;
 const types = ["retail", "business", "wholesale", "corporate"] as const;
 
@@ -72,14 +72,14 @@ export default async function AdminCrmPage({ searchParams }: { searchParams: Pro
       </form>
       {visibleCustomers.length === 0 ? <p className="empty-state">No matching contacts yet. Add your first lead above or change the search.</p> :
         <div className="crm-customer-list">{visibleCustomers.map(c => <article className="crm-customer-card" key={c.id}>
-          <div className="crm-customer-head"><div><span className="status-pill">{c.lifecycle_stage.replaceAll("_", " ")}</span><h3>{c.full_name}</h3><p>{[c.company,c.phone,c.email,[c.city,c.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ") || "No contact details yet"}</p></div><small>Added {dateTime(c.created_at)}</small></div>
-          <div className="crm-customer-meta"><span>Type: {c.customer_type}</span><span>Source: {c.source || "Not recorded"}</span><span>Preferred: {c.preferred_contact}</span><span>Owner: {c.assigned_to ? staffName.get(c.assigned_to) ?? "Assigned staff" : "Unassigned"}</span><span>Last contact: {dateTime(c.last_contacted_at)}</span><strong>Follow-up: {dateTime(c.next_follow_up_at)}</strong></div>
+          <div className="crm-customer-head"><div><span className="status-pill">{c.lifecycle_stage.replaceAll("_", " ")}</span><h3>{c.full_name}</h3><p>{[c.company,c.phone,c.email,[c.city,c.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ") || "No contact details yet"}</p></div><small>Added {formatStoreDateTime(c.created_at)}</small></div>
+          <div className="crm-customer-meta"><span>Type: {c.customer_type}</span><span>Source: {c.source || "Not recorded"}</span><span>Preferred: {c.preferred_contact}</span><span>Owner: {c.assigned_to ? staffName.get(c.assigned_to) ?? "Assigned staff" : "Unassigned"}</span><span>Last contact: {formatStoreDateTime(c.last_contacted_at)}</span><strong>Follow-up: {formatStoreDateTime(c.next_follow_up_at)}</strong></div>
           {c.internal_notes && <p className="crm-notes"><strong>Notes:</strong> {c.internal_notes}</p>}
           <details className="crm-details"><summary>Update stage / owner / follow-up</summary><form action={updateCustomer} className="crm-inline-form">
             <input type="hidden" name="id" value={c.id} />
             <label>Stage<select name="lifecycle_stage" defaultValue={c.lifecycle_stage}>{stages.map(s => <option key={s} value={s}>{s.replaceAll("_", " ")}</option>)}</select></label>
             <label>Assign to<select name="assigned_to" defaultValue={c.assigned_to ?? ""}><option value="">Unassigned</option>{(staff ?? []).map(s => <option key={s.user_id} value={s.user_id}>{staffName.get(s.user_id)} · {s.user_id.slice(0, 8)}</option>)}</select></label>
-            <label>Next follow-up<input name="next_follow_up_at" type="datetime-local" defaultValue={c.next_follow_up_at ? new Date(new Date(c.next_follow_up_at).getTime() - new Date(c.next_follow_up_at).getTimezoneOffset() * 60000).toISOString().slice(0,16) : ""} /></label>
+            <label>Next follow-up<input name="next_follow_up_at" type="datetime-local" defaultValue={toStoreDateTimeInput(c.next_follow_up_at)} /></label>
             <button className="admin-submit" type="submit">Update contact</button>
           </form></details>
           <details className="crm-details"><summary>Log call, WhatsApp, email or note</summary><form action={logCustomerActivity} className="crm-inline-form">
@@ -90,7 +90,7 @@ export default async function AdminCrmPage({ searchParams }: { searchParams: Pro
             <label>Next follow-up<input name="follow_up_at" type="datetime-local" /></label>
             <button className="admin-submit" type="submit">Save interaction</button>
           </form></details>
-          {(activityByCustomer.get(c.id) ?? []).length > 0 && <div className="crm-timeline"><strong>Recent activity</strong>{(activityByCustomer.get(c.id) ?? []).map(a => <div key={a.id}><small>{a.activity_type.replaceAll("_", " ")} · {dateTime(a.created_at)}</small><p>{a.summary}</p>{a.outcome && <small>Outcome: {a.outcome}</small>}</div>)}</div>}
+          {(activityByCustomer.get(c.id) ?? []).length > 0 && <div className="crm-timeline"><strong>Recent activity</strong>{(activityByCustomer.get(c.id) ?? []).map(a => <div key={a.id}><small>{a.activity_type.replaceAll("_", " ")} · {formatStoreDateTime(a.created_at)}</small><p>{a.summary}</p>{a.outcome && <small>Outcome: {a.outcome}</small>}</div>)}</div>}
         </article>)}</div>}
     </section>
     <p className="admin-security-note">CRM access is limited to Super Admin, Manager and Order Staff. Inventory staff do not have access to customer records. Staff IDs are shortened in the assignment list for identification; do not share private contact exports.</p>
