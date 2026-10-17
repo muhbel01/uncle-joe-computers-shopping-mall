@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = (
+// Do not bake a retailer-specific production domain into this reusable template.\nconst siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://uncle-joe-computers-shopping-mall-6.vercel.app"
+  "http://localhost:3000"
 ).replace(/\/$/, "");
 
 // Keep this list aligned with the active category slugs in Supabase.
