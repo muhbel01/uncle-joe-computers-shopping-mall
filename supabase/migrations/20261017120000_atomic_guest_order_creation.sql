@@ -356,7 +356,9 @@ begin
       and o.order_status = 'pending'
     order by r.expires_at, r.id
     limit p_batch_size
-    for update of r skip locked
+    -- Lock the order row as well as the reservation. Payment confirmation handlers
+    -- must also lock the order and reject late payment for a cancelled order.
+    for update of o, r skip locked
   loop
     update public.inventory_reservations
       set status = 'released', updated_at = now()
