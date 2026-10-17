@@ -15,7 +15,7 @@ export default async function SearchPage({ searchParams }: Props) {
   const supabase = getPublicSupabaseClient();
   let products: StoreProduct[] = [];
   let searchError = false;
-  let searchConfigured = Boolean(supabase);
+  const searchConfigured = Boolean(supabase);
 
   if (supabase && term.length >= 2) {
     const safeTerm = term.replace(/[^\p{L}\p{N}\s-]/gu, " ").replace(/\s+/g, " ").trim();
