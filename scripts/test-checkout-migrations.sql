@@ -139,7 +139,7 @@ begin
       'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
       'items', jsonb_build_array(jsonb_build_object('productId', v_product::text, 'quantity', 1))
     ));
-  exception when sqlstate 'P0001' then
+  exception when sqlstate 'P0002' then
     v_rejected := true;
   end;
   update public.products set is_active = true where id = v_product;
