@@ -32,7 +32,8 @@ export default async function HomePage() {
   const supabase = getPublicSupabaseClient();
 
   if (supabase) {
-    const { data, error } = await supabase
+    try {
+      const { data, error } = await supabase
       .from("categories")
       .select("name,slug,description")
       .eq("is_active", true)
@@ -51,7 +52,7 @@ export default async function HomePage() {
       });
     }
 
-    const { data: featuredData } = await supabase
+      const { data: featuredData } = await supabase
       .from("products")
       .select("id,name,slug,brand,condition,price,stock_quantity,warranty_description,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
       .eq("is_active", true)
@@ -60,14 +61,19 @@ export default async function HomePage() {
       .order("updated_at", { ascending: false })
       .limit(4);
 
-    featuredProducts = ((featuredData ?? []) as unknown as Array<StoreProduct & { images?: { storage_path: string; alt_text: string | null; sort_order: number }[] }>).map((product) => {
-      const first = [...(product.images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0];
-      return {
-        ...product,
-        image_url: first ? supabase.storage.from("product-images").getPublicUrl(first.storage_path).data.publicUrl : null,
-        image_alt: first?.alt_text ?? product.name,
-      };
-    });
+      featuredProducts = ((featuredData ?? []) as unknown as Array<StoreProduct & { images?: { storage_path: string; alt_text: string | null; sort_order: number }[] }>).map((product) => {
+        const first = [...(product.images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0];
+        return {
+          ...product,
+          image_url: first ? supabase.storage.from("product-images").getPublicUrl(first.storage_path).data.publicUrl : null,
+          image_alt: first?.alt_text ?? product.name,
+        };
+      });
+    } catch {
+      // Keep the storefront usable if the public catalogue service is temporarily unavailable.
+      visibleCategories = categories;
+      featuredProducts = [];
+    }
   }
 
   return (
