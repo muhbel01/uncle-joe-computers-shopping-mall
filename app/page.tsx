@@ -40,8 +40,9 @@ export default async function HomePage() {
         .order("sort_order", { ascending: true })
         .limit(10);
 
-      if (!error && data?.length) {
-        visibleCategories = data.map((category) => {
+      if (!error) {
+        // An empty active catalogue is different from a failed query: do not link to demo categories.
+        visibleCategories = (data ?? []).map((category) => {
           const fallback = categories.find((item) => item.slug === category.slug);
           return {
             icon: fallback?.icon ?? "🛍️",
@@ -133,9 +134,17 @@ export default async function HomePage() {
 
       <section id="categories" className="section container">
         <div className="section-heading"><div><span className="eyebrow">FIND YOUR NEXT ESSENTIAL</span><h2>Shop by category</h2></div><p>Everything you need to stay productive, connected and powered.</p></div>
-        <div className="category-grid">
-          {visibleCategories.map((category) => <Link className="category-card" href={"/category/" + category.slug} key={category.slug}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></Link>)}
-        </div>
+        {visibleCategories.length > 0 ? (
+          <div className="category-grid">
+            {visibleCategories.map((category) => <Link className="category-card" href={"/category/" + category.slug} key={category.slug}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></Link>)}
+          </div>
+        ) : (
+          <div className="catalogue-placeholder">
+            <strong>Categories are being prepared</strong>
+            <small>Published product categories will appear here when the store catalogue is ready.</small>
+            <Link className="button secondary" href="/products">Browse all products</Link>
+          </div>
+        )}
       </section>
 
       <section id="featured" className="section container">
