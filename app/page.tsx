@@ -34,32 +34,32 @@ export default async function HomePage() {
   if (supabase) {
     try {
       const { data, error } = await supabase
-      .from("categories")
-      .select("name,slug,description")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .limit(10);
+        .from("categories")
+        .select("name,slug,description")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .limit(10);
 
-    if (!error && data?.length) {
-      visibleCategories = data.map((category) => {
-        const fallback = categories.find((item) => item.slug === category.slug);
-        return {
-          icon: fallback?.icon ?? "🛍️",
-          title: category.name,
-          slug: category.slug,
-          text: category.description?.trim() || fallback?.text || "Browse available products",
-        };
-      });
-    }
+      if (!error && data?.length) {
+        visibleCategories = data.map((category) => {
+          const fallback = categories.find((item) => item.slug === category.slug);
+          return {
+            icon: fallback?.icon ?? "🛍️",
+            title: category.name,
+            slug: category.slug,
+            text: category.description?.trim() || fallback?.text || "Browse available products",
+          };
+        });
+      }
 
       const { data: featuredData } = await supabase
-      .from("products")
-      .select("id,name,slug,brand,condition,price,stock_quantity,warranty_description,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
-      .eq("is_active", true)
-      .eq("is_featured", true)
-      .gt("stock_quantity", 0)
-      .order("updated_at", { ascending: false })
-      .limit(4);
+        .from("products")
+        .select("id,name,slug,brand,condition,price,stock_quantity,warranty_description,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
+        .eq("is_active", true)
+        .eq("is_featured", true)
+        .gt("stock_quantity", 0)
+        .order("updated_at", { ascending: false })
+        .limit(4);
 
       featuredProducts = ((featuredData ?? []) as unknown as Array<StoreProduct & { images?: { storage_path: string; alt_text: string | null; sort_order: number }[] }>).map((product) => {
         const first = [...(product.images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0];
