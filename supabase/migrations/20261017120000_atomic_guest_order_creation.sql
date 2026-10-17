@@ -43,6 +43,9 @@ create index if not exists inventory_reservations_expiry_idx
   where status = 'reserved';
 
 alter table public.inventory_reservations enable row level security;
+-- Remove table-level grants as well as RLS access: only trusted database routines
+-- should read or mutate reservation records.
+revoke all on table public.inventory_reservations from public, anon, authenticated;
 -- Intentionally no client-facing policies. Reservations are managed only by trusted database routines.
 
 alter table public.inventory_movements
