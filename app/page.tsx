@@ -15,7 +15,34 @@ const categories = [
   { icon: "🏠", title: "Smart Home", slug: "smart-home", text: "Connected living and automation" },
 ];
 
-export default function HomePage() {
+export const revalidate = 60;
+
+export default async function HomePage() {
+  type StoreCategoryCard = { icon: string; title: string; slug: string; text: string };
+  let visibleCategories: StoreCategoryCard[] = categories;
+  const supabase = getPublicSupabaseClient();
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("name,slug,description")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .limit(10);
+
+    if (!error && data?.length) {
+      visibleCategories = data.map((category) => {
+        const fallback = categories.find((item) => item.slug === category.slug);
+        return {
+          icon: fallback?.icon ?? "🛍️",
+          title: category.name,
+          slug: category.slug,
+          text: category.description?.trim() || fallback?.text || "Browse available products",
+        };
+      });
+    }
+  }
+
   return (
     <main>
       <div className="topbar">
