@@ -19,7 +19,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = getPublicSupabaseClient();
   if (!supabase) return entries;
 
-  const [categoriesResult, productsResult] = await Promise.all([
+  try {
+    const [categoriesResult, productsResult] = await Promise.all([
     supabase
       .from("categories")
       .select("slug,updated_at")
@@ -34,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .limit(5000),
   ]);
 
-  for (const category of categoriesResult.data ?? []) {
+    for (const category of categoriesResult.data ?? []) {
     entries.push({
       url: `${siteUrl}/category/${category.slug}`,
       lastModified: category.updated_at ? new Date(category.updated_at) : now,
@@ -43,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  for (const product of productsResult.data ?? []) {
+    for (const product of productsResult.data ?? []) {
     entries.push({
       url: `${siteUrl}/products/${product.slug}`,
       lastModified: product.updated_at ? new Date(product.updated_at) : now,
@@ -52,5 +53,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  return entries;
+    return entries;
+  } catch {
+    // Keep core sitemap URLs available if the catalogue database is offline.
+    return entries;
+  }
 }
