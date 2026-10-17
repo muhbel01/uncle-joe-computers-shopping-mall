@@ -32,6 +32,20 @@ Migrations are stored in `supabase/migrations/`. The connected Supabase project 
 - Paystack/payment verification, production end-to-end checkout tests, scheduled reservation expiry, delivery rules, production security review, staff provisioning and WhatsApp support are not production-ready.
 - See `docs/SECURE_ORDER_CREATION_PLAN.md`, `docs/CHECKOUT_TEST_PLAN.md`, and `docs/REUSABLE_STOREFRONT_LAUNCH_CHECKLIST.md` for release gates.
 
+## Reusing this storefront for another retailer
+
+This codebase can be adapted into a reusable store template. Before creating a retailer-specific deployment:
+
+1. Get permission to use the retailer's name, logo, product images and other brand assets.
+2. Set `NEXT_PUBLIC_STORE_NAME`, `NEXT_PUBLIC_STORE_SHORT_NAME`, `NEXT_PUBLIC_STORE_DESCRIPTION`, `NEXT_PUBLIC_STORE_LOCATION` and `NEXT_PUBLIC_SITE_URL` for that deployment. The site URL must be the real canonical HTTPS domain before launch; the localhost fallback is for development only.
+3. Confirm currency, language and locale, then review the homepage category links against the categories actually enabled in that store's database.
+4. Configure the correct Supabase project and storage bucket for the store. Never copy production secrets into a template or commit them to Git.
+5. Import only verified inventory with the correct condition (new, used or refurbished), prices and stock counts. Keep the catalogue empty until that data is approved.
+6. Leave `NEXT_PUBLIC_CHECKOUT_ENABLED=false` until the database checkout settings, fulfilment rules, payment verification and production end-to-end tests have all been reviewed and approved.
+7. Run `npm run typecheck`, `npm run lint` and `npm run build`; verify the GitHub Actions checks before deployment.
+
+The environment variables brand the public UI and metadata; they do not automatically customise database categories, payment configuration, inventory or legal policies. Each retailer needs a separate configuration and launch review.
+
 ## Important implementation rules
 - Recalculate prices and stock on the server; never trust totals supplied by a browser.
 - Verify Paystack payments server-side and process webhooks idempotently.
