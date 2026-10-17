@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/components/cart-provider";
 import { storeConfig } from "@/lib/store-config";
 
-const money = new Intl.NumberFormat("en-NG", {
+const money = new Intl.NumberFormat(storeConfig.language, {
   style: "currency",
   currency: storeConfig.currency,
   maximumFractionDigits: 0,
