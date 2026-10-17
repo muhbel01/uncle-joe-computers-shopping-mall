@@ -10,7 +10,9 @@ declare
   v_bad_key uuid := gen_random_uuid();
   v_short_key uuid := gen_random_uuid();
   v_disabled_key uuid := gen_random_uuid();
+  v_paid_key uuid := gen_random_uuid();
   v_first record;
+  v_paid record;
   v_retry record;
   v_stock integer;
   v_order_count integer;
@@ -204,6 +206,41 @@ begin
   select stock_quantity into v_stock from public.products where id = v_product;
   if v_stock <> 5 then
     raise exception 'TEST FAILED: repeated expiry pass changed stock to %', v_stock;
+  end if;
+
+  -- A paid order must never have its stock reservation released by expiry.
+  select * into v_paid
+  from public.create_guest_order(jsonb_build_object(
+    'requestKey', v_paid_key::text,
+    'customer', jsonb_build_object(
+      'name', 'Paid Test Buyer',
+      'phone', '08012345678',
+      'email', 'paid-buyer@example.com'
+    ),
+    'fulfilmentMethod', 'pickup',
+    'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+    'customerNote', 'Paid-order reservation guard test',
+    'items', jsonb_build_array(jsonb_build_object(
+      'productId', v_product::text, 'quantity', 1
+    ))
+  ));
+
+  update public.orders
+  set payment_status = 'paid'
+  where id = v_paid.order_id;
+
+  update public.inventory_reservations
+  set expires_at = now() - interval '1 minute'
+  where order_id = v_paid.order_id and status = 'reserved';
+
+  select private.release_expired_inventory_reservations(100) into v_released;
+  if v_released <> 0 then
+    raise exception 'TEST FAILED: expired reservation for paid order was released';
+  end if;
+
+  select stock_quantity into v_stock from public.products where id = v_product;
+  if v_stock <> 4 then
+    raise exception 'TEST FAILED: paid-order stock reservation was not preserved, stock is %', v_stock;
   end if;
 
   update public.checkout_settings
