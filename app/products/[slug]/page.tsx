@@ -30,8 +30,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const supabase = getPublicSupabaseClient();
   if (!supabase) return { title: "Product details" };
-  const { data } = await supabase.from("products").select("name,short_description").eq("slug", slug).eq("is_active", true).maybeSingle();
-  return { title: data?.name ?? "Product details", description: data?.short_description ?? `Product details from ${storeConfig.name}.` };
+  try {
+    const { data, error } = await supabase.from("products").select("name,short_description").eq("slug", slug).eq("is_active", true).maybeSingle();
+    if (error) return { title: "Product details" };
+    return { title: data?.name ?? "Product details", description: data?.short_description ?? `Product details from ${storeConfig.name}.` };
+  } catch {
+    return { title: "Product details" };
+  }
 }
 
 export const revalidate = 60;
@@ -44,15 +49,34 @@ export default async function ProductDetailPage({ params }: Props) {
     return <main className="page-shell"><div className="container page-heading"><Link className="back-link" href="/products">← All products</Link><h1>Product catalogue is being connected</h1><p>Please check back soon.</p></div></main>;
   }
 
-  const { data } = await supabase
-    .from("products")
-    .select("id,name,slug,brand,condition,price,stock_quantity,short_description,description,warranty_description,return_eligible,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
+  let data: unknown = null;
+  let catalogueUnavailable = false;
+  try {
+    const result = await supabase
+      .from("products")
+      .select("id,name,slug,brand,condition,price,stock_quantity,short_description,description,warranty_description,return_eligible,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .maybeSingle();
+    data = result.data;
+    catalogueUnavailable = Boolean(result.error);
+  } catch {
+    catalogueUnavailable = true;
+  }
 
+  if (catalogueUnavailable) {
+    return (
+      <main className="page-shell">
+        <div className="container page-heading">
+          <Link className="back-link" href="/products">← All products</Link>
+          <h1>Product temporarily unavailable</h1>
+          <p>We couldn’t load this product right now. Please try again shortly.</p>
+        </div>
+      </main>
+    );
+  }
   if (!data) notFound();
-  const product = data as unknown as ProductDetail;
+  const product = data as ProductDetail;
   const firstImage = [...(product.images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0];
   const imageUrl = firstImage ? supabase.storage.from("product-images").getPublicUrl(firstImage.storage_path).data.publicUrl : null;
 
