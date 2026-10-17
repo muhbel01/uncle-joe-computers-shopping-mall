@@ -27,7 +27,8 @@ const naira = new Intl.NumberFormat("en-NG", {
 
 export default async function HomePage() {
   type StoreCategoryCard = { icon: string; title: string; slug: string; text: string };
-  let visibleCategories: StoreCategoryCard[] = categories;
+  // Never show demo category links when a retailer database is not configured.
+  let visibleCategories: StoreCategoryCard[] = [];
   let featuredProducts: StoreProduct[] = [];
   let categoryCatalogueUnavailable = false;
   let featuredCatalogueUnavailable = false;
