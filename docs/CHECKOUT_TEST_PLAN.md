@@ -1,49 +1,70 @@
 # Checkout Verification Plan
 
+Last reviewed: 17 October 2026.
+
 ## Safety boundary
 
-- Keep the checkout form in preview mode until these checks pass.
-- Do not apply checkout migrations to the existing connected database for test purposes.
-- Use an isolated Supabase development branch/project. Confirm any hourly cost before creating it.
-- Keep guest checkout disabled until a store owner explicitly configures fulfilment and approves launch.
-- Never use real customer or payment data in tests.
+- [x] Checkout form submits to `POST /api/orders`.
+- [x] The request is validated server-side and calls the atomic order-creation RPC.
+- [x] Repository migrations and core transactional tests pass against an isolated PostgreSQL 16 database in GitHub Actions.
+- [ ] Do not apply checkout migrations to the connected/live Supabase project for testing.
+- [ ] Keep guest checkout disabled until an authorised store owner configures fulfilment and approves launch.
+- [ ] Never use real customer or payment data in tests.
 
-## Application validation
+## Covered by isolated PostgreSQL integration tests
+
+- [x] Migrations apply in order to a disposable database.
+- [x] A valid order uses database prices and currency rather than browser-supplied totals.
+- [x] Idempotent retry returns the same order without reserving stock twice.
+- [x] Fractional quantities are rejected.
+- [x] Insufficient stock is rejected without changing stock.
+- [x] Inactive products are rejected.
+- [x] Expired unpaid reservations restore stock and cancel the pending order.
+- [x] A repeated expiry pass does not restore stock twice.
+- [x] Checkout is rejected while guest checkout is disabled.
+
+## Additional application validation
 
 - [ ] Malformed JSON returns HTTP 400 without exposing server details.
 - [ ] Missing or malformed request key returns HTTP 400.
 - [ ] Missing customer name/phone, invalid phone/email, or oversized fields return HTTP 400.
-- [ ] A valid email such as `buyer@example.com` passes database validation; an invalid domain format is rejected.
 - [ ] Delivery without address, city, or state returns HTTP 400.
-- [ ] Pickup requests do not require a delivery address.
+- [ ] Pickup does not require a delivery address.
 - [ ] Empty carts, more than 50 lines, duplicate product IDs, non-UUID product IDs, and fractional/zero/negative/over-limit quantities are rejected.
 - [ ] Extra/unexpected fields are rejected by the request schema.
+- [ ] User-visible API errors are helpful without exposing database internals.
 
-## Database migration and transactional behaviour
+## Database and security tests still required
 
-- [ ] Both migrations apply cleanly to an isolated database built from the repository's initial schema.
-- [ ] Checkout is rejected while the global guest-checkout setting is disabled.
-- [ ] Pickup is rejected until pickup is enabled.
-- [ ] Delivery is rejected until delivery and a non-negative flat delivery fee are configured.
-- [ ] A valid order uses prices and currency from the database, never client-supplied totals.
-- [ ] Order items preserve product name, SKU, condition, unit price, line total, and warranty snapshots.
-- [ ] Stock is reserved atomically and an inventory movement is recorded for each line.
-- [ ] A cart with insufficient stock creates no order and changes no stock.
-- [ ] A cart containing an inactive or missing product creates no order and changes no stock.
-- [ ] Repeating the same request key does not create a second order or reserve stock twice.
-- [ ] Concurrent requests for the same request key result in one order.
+- [ ] Concurrent requests using the same request key create only one order.
 - [ ] Concurrent carts competing for the last unit cannot oversell.
-- [ ] Expired unpaid pending reservations restore stock exactly once and cancel the order when all its reservations are released.
-- [ ] Paid or non-pending orders are never cancelled or released by the expiry routine.
-- [ ] Direct client access to checkout settings and reservation rows is denied.
-- [ ] The public RPC cannot call unrelated privileged routines or expose database internals.
+- [ ] A forced order-item insert failure rolls back the order and stock changes.
+- [ ] Missing, inactive and insufficient-stock products create no partial order.
+- [ ] Order-item snapshots preserve product name, SKU, condition, unit price, line total and warranty.
+- [ ] Paid or non-pending orders are never cancelled/released by reservation expiry.
+- [ ] Anonymous clients cannot read or modify other orders, payment attempts, checkout settings or reservation rows.
+- [ ] RPC privileges, exposed schemas, RLS policies and Supabase security advisors are reviewed in the intended project.
+- [ ] A trusted scheduler invokes reservation expiry; errors are observable.
 
-## Before production
+## Browser end-to-end test
 
-- [ ] Run Supabase security advisors and review the configured exposed schemas and function grants.
-- [ ] Add an abuse/rate-limit strategy for the public checkout endpoint.
-- [ ] Implement and test payment initiation and server-side payment verification/webhooks before claiming online payment support.
-- [ ] Configure a trusted scheduler for expired reservations and alert on repeated failures.
-- [ ] Add a clear privacy notice and retention policy for guest customer data.
-- [ ] Test success, stock conflict, disabled checkout, and server-error states in the browser.
-- [ ] Confirm the actual retailer's branding, delivery policy, fees, stock, terms, and launch approval.
+Use a dedicated non-production project and clearly fake fixtures.
+
+- [ ] Browse products and open product detail.
+- [ ] Search catalogue, filter by category and condition, and sort by price/name.
+- [ ] Add an in-stock product to the cart; verify quantity controls and removal.
+- [ ] Refresh and verify cart persistence.
+- [ ] Submit invalid checkout details and verify field/API errors.
+- [ ] Verify disabled checkout displays a safe message and does not clear the cart.
+- [ ] With checkout deliberately enabled in the test environment, submit an order and verify exactly one unpaid order and expected stock reservation.
+- [ ] Simulate a timeout and retry with the same request key.
+- [ ] Confirm success clears the cart only after a valid server confirmation.
+
+## Payment and production release
+
+- [ ] Implement server-side payment initialization, verification and idempotent webhook handling before claiming online payments.
+- [ ] Define delivery coverage, delivery fee rules, pickup instructions and return policy.
+- [ ] Add privacy notice, retention policy and rate limiting/abuse controls.
+- [ ] Confirm the retailer approves branding, inventory, policies and production launch.
+- [ ] Provision and test authorised staff access and image-upload permissions.
+- [ ] Keep checkout disabled until all applicable release gates pass.
