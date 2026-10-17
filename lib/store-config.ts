@@ -25,4 +25,6 @@ export const storeConfig = {
   language: publicValue(process.env.NEXT_PUBLIC_STORE_LANGUAGE, "en-NG"),
   currency: publicValue(process.env.NEXT_PUBLIC_STORE_CURRENCY, "NGN"),
   location: publicValue(process.env.NEXT_PUBLIC_STORE_LOCATION, "Nigeria"),
+  // UI opt-in only; the database must independently enable checkout too.
+  checkoutEnabled: process.env.NEXT_PUBLIC_CHECKOUT_ENABLED === "true",
 } as const;
