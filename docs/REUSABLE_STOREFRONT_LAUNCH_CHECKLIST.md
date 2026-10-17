@@ -5,7 +5,7 @@ Use this checklist for each retailer deployment. This project is a template, not
 ## 1. Store identity and domain
 
 - [ ] Get written approval to use the retailer's name, logo, product images and content.
-- [ ] Set `NEXT_PUBLIC_STORE_NAME`, `NEXT_PUBLIC_STORE_SHORT_NAME`, `NEXT_PUBLIC_STORE_DESCRIPTION`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_STORE_CURRENCY`, `NEXT_PUBLIC_STORE_LOCALE`, `NEXT_PUBLIC_STORE_LANGUAGE`, and `NEXT_PUBLIC_STORE_LOCATION`.
+- [ ] Set `NEXT_PUBLIC_STORE_NAME`, `NEXT_PUBLIC_STORE_SHORT_NAME`, `NEXT_PUBLIC_STORE_DESCRIPTION`, `NEXT_PUBLIC_STORE_CITY`, `NEXT_PUBLIC_STORE_STATE`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_STORE_CURRENCY`, `NEXT_PUBLIC_STORE_LOCALE`, `NEXT_PUBLIC_STORE_LANGUAGE`, and `NEXT_PUBLIC_STORE_LOCATION`.
 - [ ] Connect the approved domain and verify HTTPS.
 - [ ] Replace demo branding and generic contact details with approved business details.
 - [ ] Add approved privacy notice, terms, returns/refunds policy and support contact.
