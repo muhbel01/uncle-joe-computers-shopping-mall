@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { storeConfig } from "@/lib/store-config";
+import { getPublicSupabaseClient } from "@/lib/supabase/public";
 
 const categories = [
   { icon: "💻", title: "Computers & Laptops", slug: "computers-laptops", text: "Work, school and business" },
@@ -73,7 +74,7 @@ export default function HomePage() {
       <section id="categories" className="section container">
         <div className="section-heading"><div><span className="eyebrow">FIND YOUR NEXT ESSENTIAL</span><h2>Shop by category</h2></div><p>Everything you need to stay productive, connected and powered.</p></div>
         <div className="category-grid">
-          {categories.map((category) => <Link className="category-card" href={"/category/" + category.slug} key={category.title}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></Link>)}
+          {visibleCategories.map((category) => <Link className="category-card" href={"/category/" + category.slug} key={category.slug}><span className="category-icon">{category.icon}</span><strong>{category.title}</strong><small>{category.text}</small><span className="arrow">↗</span></Link>)}
         </div>
       </section>
 
