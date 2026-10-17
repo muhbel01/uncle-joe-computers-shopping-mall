@@ -90,7 +90,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((current) => current.flatMap((item) => {
       if (item.productId !== productId) return [item];
       if (quantity <= 0 || item.stockQuantity <= 0) return [];
-      return [{ ...item, quantity: Math.min(Math.floor(quantity), item.stockQuantity) }];
+      return [{ ...item, quantity: Math.max(1, Math.min(Math.floor(quantity), item.stockQuantity)) }];
     }));
   }, []);
 
