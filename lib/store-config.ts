@@ -13,6 +13,10 @@ function publicValue(value: string | undefined, fallback: string): string {
 export const storeConfig = {
   name: publicValue(process.env.NEXT_PUBLIC_STORE_NAME, "Demo Tech Store"),
   shortName: publicValue(process.env.NEXT_PUBLIC_STORE_SHORT_NAME, "DEMO TECH"),
+  tagline: publicValue(
+    process.env.NEXT_PUBLIC_STORE_TAGLINE,
+    "Smarter tech. Better value.",
+  ),
   description: publicValue(
     process.env.NEXT_PUBLIC_STORE_DESCRIPTION,
     "Browse technology, electronics and everyday essentials from our online store.",
