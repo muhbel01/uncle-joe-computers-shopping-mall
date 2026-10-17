@@ -107,6 +107,28 @@ export default function CheckoutPage() {
     );
   }
 
+  if (!storeConfig.checkoutEnabled) {
+    return (
+      <main className="page-shell">
+        <div className="container page-heading">
+          <Link href="/cart" className="back-link">← Back to cart</Link>
+          <span className="eyebrow">{storeConfig.shortName}</span>
+          <h1>Checkout is not open yet</h1>
+          <p>This store is still preparing online order requests. Your cart is saved in this browser; no personal details have been submitted and no order has been created.</p>
+          <section className="checkout-review">
+            <h2>Your cart summary</h2>
+            <p><strong>{itemCount}</strong> {itemCount === 1 ? "item" : "items"} · estimated subtotal <strong>{money.format(subtotal)}</strong></p>
+            <p>Prices and availability are estimates until the store confirms its catalogue and checkout settings.</p>
+          </section>
+          <div className="hero-actions">
+            <Link className="button primary" href="/cart">Review cart</Link>
+            <Link className="button secondary" href="/products">Continue shopping</Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (items.length === 0) {
     return <main className="page-shell"><div className="container page-heading"><h1>Your cart is empty</h1><p>Add products before starting checkout.</p><Link className="button primary" href="/products">Browse products</Link></div></main>;
   }
