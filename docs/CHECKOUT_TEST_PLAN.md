@@ -46,6 +46,9 @@ Last reviewed: 17 October 2026.
 - [ ] RPC privileges, exposed schemas, RLS policies and Supabase security advisors are reviewed in the intended project.
 - [ ] A trusted scheduler invokes reservation expiry; errors are observable.
 
+- [ ] With `NEXT_PUBLIC_CHECKOUT_ENABLED` unset or false, checkout displays a preparation message and does not ask for customer details.
+- [ ] Setting `NEXT_PUBLIC_CHECKOUT_ENABLED=true` only reveals the form; the database must still reject order creation while its checkout setting is disabled.
+
 ## Browser end-to-end test
 
 Use a dedicated non-production project and clearly fake fixtures.
