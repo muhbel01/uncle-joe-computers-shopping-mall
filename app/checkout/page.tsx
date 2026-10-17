@@ -107,6 +107,10 @@ export default function CheckoutPage() {
     );
   }
 
+  if (items.length === 0) {
+    return <main className="page-shell"><div className="container page-heading"><h1>Your cart is empty</h1><p>Add products before starting checkout.</p><Link className="button primary" href="/products">Browse products</Link></div></main>;
+  }
+
   if (!storeConfig.checkoutEnabled) {
     return (
       <main className="page-shell">
@@ -128,11 +132,6 @@ export default function CheckoutPage() {
       </main>
     );
   }
-
-  if (items.length === 0) {
-    return <main className="page-shell"><div className="container page-heading"><h1>Your cart is empty</h1><p>Add products before starting checkout.</p><Link className="button primary" href="/products">Browse products</Link></div></main>;
-  }
-
   return (
     <main className="page-shell">
       <div className="container page-heading">
