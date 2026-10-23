@@ -122,6 +122,22 @@ begin
     raise exception 'TEST FAILED: expected stock 3 after reservation, got %', v_stock;
   end if;
 
+  -- Order items must snapshot the verified product data used at checkout.
+  if not exists (
+    select 1
+    from public.order_items oi
+    join public.products p on p.id = oi.product_id
+    where oi.order_id = v_first.order_id
+      and oi.product_name = p.name
+      and oi.sku is not distinct from p.sku
+      and oi.condition = p.condition
+      and oi.unit_price = p.price
+      and oi.line_total = p.price * 2
+      and oi.warranty_snapshot is not distinct from p.warranty_description
+  ) then
+    raise exception 'TEST FAILED: order item snapshot does not match verified product details';
+  end if;
+
   select * into v_retry
   from public.create_guest_order(jsonb_build_object(
     'requestKey', v_key::text,
@@ -190,6 +206,12 @@ begin
   from public.products where id = v_product;
   if v_stock <> 3 then
     raise exception 'TEST FAILED: rejected order changed stock';
+  end if;
+
+  if exists (
+    select 1 from public.orders where checkout_request_key = v_short_key
+  ) then
+    raise exception 'TEST FAILED: rejected checkout left a partial order behind';
   end if;
 
   -- Inactive products must not be purchasable, even when stock exists.
