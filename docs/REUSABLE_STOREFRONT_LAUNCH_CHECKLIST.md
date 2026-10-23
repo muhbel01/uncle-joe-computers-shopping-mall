@@ -53,10 +53,10 @@ Use this checklist for each retailer deployment. This project is a template, not
 
 - Public storefront, product detail, cart and catalogue search/filter/sort are implemented.
 - Checkout form is connected to the order API, but the public checkout UI defaults to disabled.
-- Latest verified commit (`bb69a1f1768d6acb1f3e051b4dd5de386862bed8`) passed GitHub Actions CI: TypeScript type check, lint, production build and checkout integration tests against a disposable PostgreSQL 17 database.
+- Latest verified commit (`86832d99970970773c029887601deb3b869cba59`) passed GitHub Actions CI: TypeScript type check, lint, production build and checkout integration tests against a disposable PostgreSQL 17 database.
 - These automated tests do not replace browser end-to-end testing or production security review.
 - The connected Supabase project has not been migrated for guest checkout. Do not accept live orders.
 - No actual inventory has been imported; the catalogue should remain empty until verified stock is provided.
-- Preview deployment and browser-level verification remain outstanding. Recent Vercel deployment attempts reported failures/cancellations, including a deployment-rate-limit error; verify the hosting account's current status before retrying.
+- A preview deployment for the latest commit is READY: [Vercel deployment](https://vercel.com/muhbel01-5044/uncle-joe-computers-shopping-mall/62pch3JuGjdKrsxfKeDkJ1JvrRzE) and [preview URL](https://uncle-joe-computers-shopping-mall-git-feat-29287d-muhbel01-5044.vercel.app). Automated browser fetch is blocked by Vercel team/project authorization (HTTP 403), so a human browser check is still required. The duplicate `-6kdf` project is failing due to the Vercel deployment-rate limit; do not retry that duplicate project.
 - Payment collection, scheduled reservation release, production end-to-end tests and retailer launch approval remain outstanding.
 - Keep the pull request in draft and do not enable checkout or apply checkout migrations to the connected database until the release gates have been reviewed and explicitly approved.
