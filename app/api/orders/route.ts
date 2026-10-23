@@ -7,6 +7,40 @@ export const runtime = "nodejs";
 const genericFailure = "We couldn't place your order. Please review your details and try again.";
 const MAX_CHECKOUT_BODY_BYTES = 64 * 1024;
 
+type LimitedBodyResult =
+  | { tooLarge: true }
+  | { tooLarge: false; text: string };
+
+async function readLimitedBody(request: Request): Promise<LimitedBodyResult> {
+  const reader = request.body?.getReader();
+  if (!reader) return { tooLarge: false, text: "" };
+
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_CHECKOUT_BODY_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      return { tooLarge: true };
+    }
+    chunks.push(value);
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return { tooLarge: false, text: new TextDecoder().decode(bytes) };
+}
+
 export async function POST(request: Request) {
   const contentType = request.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
   if (contentType !== "application/json") {
@@ -19,14 +53,13 @@ export async function POST(request: Request) {
   }
 
   let body: unknown;
-  let rawBody: string;
 
   try {
-    rawBody = await request.text();
-    if (new TextEncoder().encode(rawBody).byteLength > MAX_CHECKOUT_BODY_BYTES) {
+    const result = await readLimitedBody(request);
+    if (result.tooLarge) {
       return NextResponse.json({ error: "Your checkout request is too large. Please reduce the cart and try again." }, { status: 413 });
     }
-    body = JSON.parse(rawBody);
+    body = JSON.parse(result.text);
   } catch {
     return NextResponse.json({ error: "Please submit valid checkout details." }, { status: 400 });
   }
