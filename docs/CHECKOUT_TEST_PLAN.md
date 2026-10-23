@@ -6,7 +6,7 @@ Last reviewed: 17 October 2026.
 
 - [x] Checkout form submits to `POST /api/orders`.
 - [x] The request is validated server-side and calls the atomic order-creation RPC.
-- [x] Repository migrations and core transactional tests pass against an isolated PostgreSQL 16 database in GitHub Actions.
+- [x] Repository migrations and core transactional tests pass against an isolated PostgreSQL 17 database in GitHub Actions.
 - [ ] Do not apply checkout migrations to the connected/live Supabase project for testing.
 - [ ] Keep guest checkout disabled until an authorised store owner configures fulfilment and approves launch.
 - [ ] Never use real customer or payment data in tests.
