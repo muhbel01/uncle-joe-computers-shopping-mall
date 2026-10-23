@@ -26,6 +26,8 @@ Last reviewed: 23 October 2026.
 ## Additional application validation
 
 - [ ] Malformed JSON returns HTTP 400 without exposing server details.
+- [ ] Non-JSON content type returns HTTP 415.
+- [ ] Checkout request bodies over 64 KiB return HTTP 413, including when the size is not declared in `Content-Length`.
 - [ ] Missing or malformed request key returns HTTP 400.
 - [ ] Missing customer name/phone, invalid phone/email, or oversized fields return HTTP 400.
 - [ ] Delivery without address, city, or state returns HTTP 400.
