@@ -97,7 +97,7 @@ export default function CheckoutPage() {
           <p>Your order has been recorded, but payment has not been taken.</p>
           <section className="checkout-review" aria-live="polite">
             <h2>Order {order.number}</h2>
-            <p><strong>Total:</strong> {new Intl.NumberFormat("en-NG", { style: "currency", currency: order.currency || storeConfig.currency, maximumFractionDigits: 0 }).format(order.total)}</p>
+            <p><strong>Total:</strong> {new Intl.NumberFormat(storeConfig.language, { style: "currency", currency: order.currency || storeConfig.currency, maximumFractionDigits: 0 }).format(order.total)}</p>
             <p><strong>Payment:</strong> Not paid</p>
             <p>The store must confirm payment and fulfilment arrangements separately. Do not treat this as a paid order.</p>
           </section>
