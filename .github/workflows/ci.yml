@@ -22,11 +22,11 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
-      - name: Run checkout request-schema tests
+      - name: Run checkout request tests
         run: |
           rm -rf .test-build
-          npx tsc lib/checkout-schema.ts --target ES2020 --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --strict --outDir .test-build
-          node --test tests/checkout-schema.test.cjs
+          npx tsc lib/checkout-schema.ts lib/checkout-http.ts --target ES2020 --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --strict --outDir .test-build
+          node --test tests/checkout-schema.test.cjs tests/checkout-http.test.cjs
           rm -rf .test-build
       - name: Type check
         run: npm run typecheck

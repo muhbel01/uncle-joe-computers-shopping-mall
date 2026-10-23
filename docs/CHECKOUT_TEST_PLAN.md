@@ -25,25 +25,21 @@ Last reviewed: 23 October 2026.
 - [x] Insufficient-stock checkout leaves no order behind.
 - [x] Order-item snapshots preserve product name, SKU, condition, unit price, line total and warranty.
 
-## Covered by automated request-schema tests
+## Covered by automated request tests
 
-These tests exercise the Zod schema directly; they do not yet exercise HTTP responses from the route.
+- [x] Zod schema validation for valid delivery/pickup, IDs, delivery address, phone/email, duplicate products, quantities, cart size and unexpected fields.
+- [x] Non-JSON content type is rejected with HTTP-helper status 415.
+- [x] Malformed JSON is rejected with HTTP-helper status 400.
+- [x] Declared oversized request is rejected with HTTP-helper status 413.
+- [x] Streamed oversized body is rejected with HTTP-helper status 413 even without Content-Length.
 
-- [x] Valid delivery payload is accepted.
-- [x] Pickup payload may omit delivery address fields.
-- [x] Invalid request key and product ID are rejected.
-- [x] Delivery without address, city, or state is rejected.
-- [x] Invalid phone and email values are rejected.
-- [x] Duplicate products and invalid quantities are rejected.
-- [x] Empty carts, carts over 50 lines and unexpected top-level fields are rejected.
+These tests exercise the request parsing helper and schema directly, not the full Next.js route or a running browser session.
 
 ## Additional application/API validation
 
-- [ ] Malformed JSON returns HTTP 400 without exposing server details.
-- [ ] Non-JSON content type returns HTTP 415.
-- [ ] Checkout request bodies over 64 KiB return HTTP 413, including when the size is not declared in `Content-Length`.
-- [ ] Invalid customer fields and oversized text fields return HTTP 400 at the HTTP boundary.
-- [ ] User-visible API errors are helpful without exposing database internals.
+- [ ] Full route tests cover invalid customer fields and response JSON.
+- [ ] User-visible API errors remain helpful without exposing database internals.
+- [ ] Rate limiting and abuse controls are implemented and tested.
 
 ## Database and security tests still required
 
