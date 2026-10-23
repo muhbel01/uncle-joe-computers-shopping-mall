@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Node's built-in test runner executes this CommonJS test file. */
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { checkoutRequestSchema } = require("../.test-build/checkout-schema.js");
