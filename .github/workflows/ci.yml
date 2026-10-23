@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -73,7 +73,7 @@ jobs:
           AS $$ SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
           CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
           SQL
-      - name: Apply repository migrations to disposable PostgreSQL
+      - name: Apply repository migrations to disposable PostgreSQL 17
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/202610090001_initial_schema.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261017090000_checkout_idempotency_and_fulfilment.sql
