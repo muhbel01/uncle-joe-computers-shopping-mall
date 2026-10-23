@@ -5,12 +5,28 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 
 const genericFailure = "We couldn't place your order. Please review your details and try again.";
+const MAX_CHECKOUT_BODY_BYTES = 64 * 1024;
 
 export async function POST(request: Request) {
+  const contentType = request.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+  if (contentType !== "application/json") {
+    return NextResponse.json({ error: "Submit checkout details using JSON." }, { status: 415 });
+  }
+
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_CHECKOUT_BODY_BYTES) {
+    return NextResponse.json({ error: "Your checkout request is too large. Please reduce the cart and try again." }, { status: 413 });
+  }
+
   let body: unknown;
+  let rawBody: string;
 
   try {
-    body = await request.json();
+    rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_CHECKOUT_BODY_BYTES) {
+      return NextResponse.json({ error: "Your checkout request is too large. Please reduce the cart and try again." }, { status: 413 });
+    }
+    body = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: "Please submit valid checkout details." }, { status: 400 });
   }
