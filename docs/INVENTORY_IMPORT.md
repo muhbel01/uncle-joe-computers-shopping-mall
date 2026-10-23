@@ -7,14 +7,25 @@ This guide prepares the shop's existing stock list for a controlled catalogue im
 - `inventory-import-template.csv` — blank UTF-8 CSV template. Copy it and fill one row per distinct sellable product/variant.
 - Keep your original spreadsheet unchanged and work on a copy.
 
-## Required fields
+## Required CSV headers
 
-- `category_slug`: one of the existing category slugs below.
+The importer requires only these four headers:
+
 - `name`: customer-facing product name.
 - `condition`: exactly `new`, `used`, or `refurbished`.
 - `price_ngn`: numeric amount in naira only (for example `250000`; no currency symbol or thousands separators).
 - `opening_stock`: count physically verified before go-live. Use a non-negative whole number. Do not guess stock.
-- `is_active`: use `false` until price, condition, warranty, stock and photos have been reviewed. Publish only approved rows.
+
+Other template columns are optional. When provided:
+
+- `category_slug`: use one of the existing category slugs below.
+- `is_active`: the importer always creates unpublished drafts, even if this value is `true`. Keep it `false` during review.
+- `is_featured`: does not cause an imported product to be published or featured automatically.
+- `sku`: keep unique. If no SKU exists, leave it blank until the shop assigns one.
+- `compare_at_price_ngn`: leave blank unless there is a genuine higher reference price.
+- `return_eligible` and `serial_tracking_required`: use `true` or `false`.
+- `low_stock_threshold`: use a non-negative whole number.
+- `image_file_names`: a note for matching product photos during a later upload; it does not upload files by itself.
 
 ## Existing category slugs
 
@@ -33,13 +44,10 @@ This guide prepares the shop's existing stock list for a controlled catalogue im
 
 ## Data rules
 
-- Keep SKUs unique. If no SKU exists, leave it blank until the shop assigns one.
-- Leave `compare_at_price_ngn` blank unless there is a genuine higher reference price.
-- Use `true` or `false` for `return_eligible`, `serial_tracking_required`, `is_active`, and `is_featured`.
-- Use a non-negative whole number for `low_stock_threshold` and `opening_stock`.
+- Use one row per distinct sellable product/variant.
 - Keep product descriptions factual. Confirm laptop specifications, battery health, cosmetic condition, included accessories, warranty terms, and refurbished/used status.
-- `image_file_names` is a note for matching product photos during a later upload; it does not upload files by itself.
 - Avoid commas inside numeric values. Standard CSV quoting should be used for text fields containing commas, quotes, or line breaks.
+- Confirm the selling price and physical stock count before importing.
 
 ## Safe import sequence
 
