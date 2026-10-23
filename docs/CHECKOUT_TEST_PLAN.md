@@ -22,18 +22,27 @@ Last reviewed: 23 October 2026.
 - [x] Expired unpaid reservations restore stock and cancel the pending order.
 - [x] A repeated expiry pass does not restore stock twice.
 - [x] Checkout is rejected while guest checkout is disabled.
+- [x] Insufficient-stock checkout leaves no order behind.
+- [x] Order-item snapshots preserve product name, SKU, condition, unit price, line total and warranty.
 
-## Additional application validation
+## Covered by automated request-schema tests
+
+These tests exercise the Zod schema directly; they do not yet exercise HTTP responses from the route.
+
+- [x] Valid delivery payload is accepted.
+- [x] Pickup payload may omit delivery address fields.
+- [x] Invalid request key and product ID are rejected.
+- [x] Delivery without address, city, or state is rejected.
+- [x] Invalid phone and email values are rejected.
+- [x] Duplicate products and invalid quantities are rejected.
+- [x] Empty carts, carts over 50 lines and unexpected top-level fields are rejected.
+
+## Additional application/API validation
 
 - [ ] Malformed JSON returns HTTP 400 without exposing server details.
 - [ ] Non-JSON content type returns HTTP 415.
 - [ ] Checkout request bodies over 64 KiB return HTTP 413, including when the size is not declared in `Content-Length`.
-- [ ] Missing or malformed request key returns HTTP 400.
-- [ ] Missing customer name/phone, invalid phone/email, or oversized fields return HTTP 400.
-- [ ] Delivery without address, city, or state returns HTTP 400.
-- [ ] Pickup does not require a delivery address.
-- [ ] Empty carts, more than 50 lines, duplicate product IDs, non-UUID product IDs, and fractional/zero/negative/over-limit quantities are rejected.
-- [ ] Extra/unexpected fields are rejected by the request schema.
+- [ ] Invalid customer fields and oversized text fields return HTTP 400 at the HTTP boundary.
 - [ ] User-visible API errors are helpful without exposing database internals.
 
 ## Database and security tests still required
@@ -42,13 +51,10 @@ Last reviewed: 23 October 2026.
 - [ ] Concurrent carts competing for the last unit cannot oversell.
 - [ ] A forced order-item insert failure rolls back the order and stock changes.
 - [ ] Missing and inactive products create no partial order.
-- [x] An insufficient-stock checkout leaves no order behind (verified by the isolated PostgreSQL integration run on 23 October 2026).
-- [x] Order-item snapshots preserve product name, SKU, condition, unit price, line total and warranty (verified by the isolated PostgreSQL integration run on 23 October 2026).
 - [ ] Paid or non-pending orders are never cancelled/released by reservation expiry.
 - [ ] Anonymous clients cannot read or modify other orders, payment attempts, checkout settings or reservation rows.
 - [ ] RPC privileges, exposed schemas, RLS policies and Supabase security advisors are reviewed in the intended project.
 - [ ] A trusted scheduler invokes reservation expiry; errors are observable.
-
 - [ ] With `NEXT_PUBLIC_CHECKOUT_ENABLED` unset or false, checkout displays a preparation message and does not ask for customer details.
 - [ ] Setting `NEXT_PUBLIC_CHECKOUT_ENABLED=true` only reveals the form; the database must still reject order creation while its checkout setting is disabled.
 
