@@ -49,11 +49,14 @@ Use this checklist for each retailer deployment. This project is a template, not
 - [ ] Confirm backups, rollback steps and who is responsible for production support.
 - [ ] Obtain final retailer sign-off before announcing the site or accepting real customer information/orders.
 
-## Current project status (17 October 2026)
+## Current project status (23 October 2026)
 
 - Public storefront, product detail, cart and catalogue search/filter/sort are implemented.
-- Checkout form is connected to the order API.
-- Latest verified code commit (`1d828aef`) passed application type check, lint, production build and the isolated PostgreSQL checkout integration job. Subsequent documentation commits also passed GitHub Actions CI.
-- The connected Supabase project has not been migrated for guest checkout. Guest checkout defaults to disabled.
+- Checkout form is connected to the order API, but the public checkout UI defaults to disabled.
+- Latest verified commit (`bb69a1f1768d6acb1f3e051b4dd5de386862bed8`) passed GitHub Actions CI: TypeScript type check, lint, production build and checkout integration tests against a disposable PostgreSQL 17 database.
+- These automated tests do not replace browser end-to-end testing or production security review.
+- The connected Supabase project has not been migrated for guest checkout. Do not accept live orders.
 - No actual inventory has been imported; the catalogue should remain empty until verified stock is provided.
+- Preview deployment and browser-level verification remain outstanding. Recent Vercel deployment attempts reported failures/cancellations, including a deployment-rate-limit error; verify the hosting account's current status before retrying.
 - Payment collection, scheduled reservation release, production end-to-end tests and retailer launch approval remain outstanding.
+- Keep the pull request in draft and do not enable checkout or apply checkout migrations to the connected database until the release gates have been reviewed and explicitly approved.
