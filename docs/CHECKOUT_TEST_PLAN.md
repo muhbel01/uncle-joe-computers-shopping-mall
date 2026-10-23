@@ -1,6 +1,6 @@
 # Checkout Verification Plan
 
-Last reviewed: 17 October 2026.
+Last reviewed: 23 October 2026.
 
 ## Safety boundary
 
@@ -39,8 +39,9 @@ Last reviewed: 17 October 2026.
 - [ ] Concurrent requests using the same request key create only one order.
 - [ ] Concurrent carts competing for the last unit cannot oversell.
 - [ ] A forced order-item insert failure rolls back the order and stock changes.
-- [ ] Missing, inactive and insufficient-stock products create no partial order.
-- [ ] Order-item snapshots preserve product name, SKU, condition, unit price, line total and warranty.
+- [ ] Missing and inactive products create no partial order.
+- [x] An insufficient-stock checkout leaves no order behind (verified by the isolated PostgreSQL integration run on 23 October 2026).
+- [x] Order-item snapshots preserve product name, SKU, condition, unit price, line total and warranty (verified by the isolated PostgreSQL integration run on 23 October 2026).
 - [ ] Paid or non-pending orders are never cancelled/released by reservation expiry.
 - [ ] Anonymous clients cannot read or modify other orders, payment attempts, checkout settings or reservation rows.
 - [ ] RPC privileges, exposed schemas, RLS policies and Supabase security advisors are reviewed in the intended project.
