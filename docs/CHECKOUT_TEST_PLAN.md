@@ -48,7 +48,7 @@ These tests exercise the request parsing helper and schema directly, not the ful
 - [x] Concurrent requests using the same request key create only one order (isolated PostgreSQL concurrency test).
 - [x] Concurrent carts competing for the last unit cannot oversell (isolated PostgreSQL concurrency test).
 - [x] A forced order-item insert failure rolls back the order, stock changes, reservations and inventory movement (isolated PostgreSQL integration test).
-- [ ] Missing and inactive products create no partial order.
+- [x] Missing and inactive products are rejected without leaving partial orders in the isolated PostgreSQL integration test.
 - [ ] Paid or non-pending orders are never cancelled/released by reservation expiry.
 - [ ] Anonymous clients cannot read or modify other orders, payment attempts, checkout settings or reservation rows.
 - [ ] RPC privileges, exposed schemas, RLS policies and Supabase security advisors are reviewed in the intended project.

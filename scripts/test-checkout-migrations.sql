@@ -27,6 +27,8 @@ declare
   v_disabled_key uuid := gen_random_uuid();
   v_rollback_key uuid := gen_random_uuid();
   v_paid_key uuid := gen_random_uuid();
+  v_missing_key uuid := gen_random_uuid();
+  v_missing_product uuid := gen_random_uuid();
   v_first record;
   v_paid record;
   v_retry record;
@@ -281,6 +283,29 @@ begin
   if not v_rejected then
     raise exception 'TEST FAILED: inactive product was purchasable';
   end if;
+  if exists (select 1 from public.orders where checkout_request_key = v_short_key) then
+    raise exception 'TEST FAILED: inactive-product checkout left a partial order behind';
+  end if;
+
+  -- A well-formed but nonexistent product UUID must fail atomically as unavailable.
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_missing_key::text,
+      'customer', jsonb_build_object('name', 'Missing Product Buyer', 'phone', '08012345678', 'email', 'missing@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_missing_product::text, 'quantity', 1))
+    ));
+  exception when sqlstate 'P0002' then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'TEST FAILED: nonexistent product was purchasable';
+  end if;
+  if exists (select 1 from public.orders where checkout_request_key = v_missing_key) then
+    raise exception 'TEST FAILED: nonexistent-product checkout left a partial order behind';
+  end if;
 
   update public.inventory_reservations
   set expires_at = now() - interval '1 minute'
@@ -376,6 +401,6 @@ begin
     raise exception 'TEST FAILED: checkout succeeded while globally disabled';
   end if;
 
-  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, forced order-item rollback, fractional quantity rejection, insufficient stock rollback, inactive-product rejection, reservation expiry without double restoration, paid-order status preservation, and disabled checkout';
+  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, forced order-item rollback, fractional quantity rejection, insufficient stock rollback, inactive and missing-product rejection without partial orders, reservation expiry without double restoration, paid-order status preservation, and disabled checkout';
 end
 $$;
