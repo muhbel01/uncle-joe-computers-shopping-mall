@@ -5,14 +5,14 @@
 
 -- Test-only trigger can force an order-item failure to prove all checkout writes roll back.
 create or replace function pg_temp.fail_order_item_insert_for_test()
-returns trigger language plpgsql as $
+returns trigger language plpgsql as $rollback_test$
 begin
   if current_setting('test.force_order_item_failure', true) = 'on' then
     raise exception 'TEST ONLY: forced order-item insert failure' using errcode = 'P0001';
   end if;
   return new;
 end;
-$;
+$rollback_test$;
 
 create trigger checkout_test_force_order_item_failure
 before insert on public.order_items
