@@ -38,7 +38,7 @@ These tests exercise the request parsing helper and schema directly, not the ful
 
 ## Additional application/API validation
 
-- [ ] Full Next.js route tests cover invalid customer fields and response JSON.
+- [x] Checkout handler integration tests cover invalid customer fields, response JSON, RPC error mapping and safe failures using injected test dependencies. (Full browser E2E remains outstanding.)
 - [x] Extracted API response tests verify safe error mapping and valid unpaid-order response formatting.
 - [x] Unknown database errors are mapped to a generic response without exposing internal error details.
 - [ ] Rate limiting and abuse controls are implemented and tested.

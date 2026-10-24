@@ -25,8 +25,8 @@ jobs:
       - name: Run checkout request tests
         run: |
           rm -rf .test-build
-          npx tsc lib/checkout-schema.ts lib/checkout-http.ts lib/checkout-api.ts --target ES2020 --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --strict --outDir .test-build
-          node --test tests/checkout-schema.test.cjs tests/checkout-http.test.cjs tests/checkout-api.test.cjs
+          npx tsc lib/checkout-schema.ts lib/checkout-http.ts lib/checkout-api.ts lib/checkout-route.ts --target ES2020 --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --strict --outDir .test-build
+          node --test tests/checkout-schema.test.cjs tests/checkout-http.test.cjs tests/checkout-api.test.cjs tests/checkout-route.test.cjs
           rm -rf .test-build
       - name: Type check
         run: npm run typecheck
