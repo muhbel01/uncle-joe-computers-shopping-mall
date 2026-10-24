@@ -44,6 +44,7 @@ These tests exercise the request parsing helper and schema directly, not the ful
 - [x] Checkout route uses a shared atomic Upstash Redis fixed-window limiter (5 requests per IP per 60 seconds) and returns 429 with Retry-After when exceeded.
 - [x] Missing or failed limiter configuration fails closed with HTTP 503 before database access.
 - [x] Route tests cover rate-limit rejection and fail-closed behavior.
+- [x] Dedicated limiter unit tests cover missing credentials, valid atomic Redis command construction, over-limit responses and Redis HTTP failures.
 - [ ] Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in the hosting environment and verify platform IP-header behavior before enabling checkout.
 
 ## Database and security tests still required
@@ -52,7 +53,7 @@ These tests exercise the request parsing helper and schema directly, not the ful
 - [x] Concurrent carts competing for the last unit cannot oversell (isolated PostgreSQL concurrency test).
 - [x] A forced order-item insert failure rolls back the order, stock changes, reservations and inventory movement (isolated PostgreSQL integration test).
 - [x] Missing and inactive products are rejected without leaving partial orders in the isolated PostgreSQL integration test.
-- [ ] Paid or non-pending orders are never cancelled/released by reservation expiry.
+- [x] Expiry leaves paid orders' payment and order statuses unchanged in the isolated PostgreSQL integration test. (Broader non-pending-state coverage should be rechecked if additional order states are introduced.)
 - [ ] Anonymous clients cannot read or modify other orders, payment attempts, checkout settings or reservation rows.
 - [ ] RPC privileges, exposed schemas, RLS policies and Supabase security advisors are reviewed in the intended project.
 - [ ] A trusted scheduler invokes reservation expiry; errors are observable.
