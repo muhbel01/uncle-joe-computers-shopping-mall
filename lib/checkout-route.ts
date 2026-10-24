@@ -1,6 +1,7 @@
 import { checkoutRequestSchema, type CheckoutRequest } from "./checkout-schema";
 import { readCheckoutJson } from "./checkout-http";
 import { checkoutRpcErrorResponse, checkoutSuccessResponse } from "./checkout-api";
+import { checkCheckoutRateLimit, type CheckoutRateLimitResult } from "./checkout-rate-limit";
 
 type RpcError = { code?: string } | null;
 
@@ -12,14 +13,28 @@ export type CheckoutRouteDependencies = {
     }>;
   }>;
   logError?: (message: string, details: Record<string, unknown>) => void;
+  rateLimit?: (request: Request) => Promise<CheckoutRateLimitResult>;
 };
 
 const genericFailure = "We couldn't place your order. Please review your details and try again.";
 
 export function createCheckoutPostHandler(dependencies: CheckoutRouteDependencies) {
   const logError = dependencies.logError ?? ((message, details) => console.error(message, details));
+  const rateLimit = dependencies.rateLimit ?? checkCheckoutRateLimit;
 
   return async function POST(request: Request): Promise<Response> {
+    const limit = await rateLimit(request);
+    if (!limit.allowed) {
+      if ("unavailable" in limit && limit.unavailable) {
+        return Response.json({ error: "Checkout is temporarily unavailable. Please try again later." }, { status: 503 });
+      }
+      const retryAfter = "retryAfterSeconds" in limit ? limit.retryAfterSeconds : 60;
+      return Response.json(
+        { error: "Too many checkout attempts. Please wait before trying again." },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } },
+      );
+    }
+
     const readResult = await readCheckoutJson(request);
     if (!readResult.ok) {
       return Response.json({ error: readResult.error }, { status: readResult.status });

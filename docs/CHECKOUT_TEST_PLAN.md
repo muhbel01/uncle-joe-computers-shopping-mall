@@ -1,6 +1,6 @@
 # Checkout Verification Plan
 
-Last reviewed: 23 October 2026.
+Last reviewed: 24 October 2026.
 
 ## Safety boundary
 
@@ -41,7 +41,10 @@ These tests exercise the request parsing helper and schema directly, not the ful
 - [x] Checkout handler integration tests cover invalid customer fields, response JSON, RPC error mapping and safe failures using injected test dependencies. (Full browser E2E remains outstanding.)
 - [x] Extracted API response tests verify safe error mapping and valid unpaid-order response formatting.
 - [x] Unknown database errors are mapped to a generic response without exposing internal error details.
-- [ ] Rate limiting and abuse controls are implemented and tested.
+- [x] Checkout route uses a shared atomic Upstash Redis fixed-window limiter (5 requests per IP per 60 seconds) and returns 429 with Retry-After when exceeded.
+- [x] Missing or failed limiter configuration fails closed with HTTP 503 before database access.
+- [x] Route tests cover rate-limit rejection and fail-closed behavior.
+- [ ] Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in the hosting environment and verify platform IP-header behavior before enabling checkout.
 
 ## Database and security tests still required
 

@@ -31,6 +31,7 @@ function dependencies({ data = { order_id: "order-1", order_number: "UJ-1001", o
   let rpcCalls = 0;
   const deps = {
     logError() {},
+    rateLimit: async () => ({ allowed: true }),
     async createClient() {
       clientCalls++;
       if (throws) throw new Error("secret database details");
@@ -94,4 +95,24 @@ test("rejects an unexpected RPC response shape", async () => {
   const mock = dependencies({ data: { order_id: "order-1", order_number: "UJ-1001", order_total: "NaN" } });
   const response = await createCheckoutPostHandler(mock.deps)(request(validPayload()));
   assert.equal(response.status, 500);
+});
+
+
+test("blocks checkout when shared rate limiting is unavailable", async () => {
+  const mock = dependencies();
+  mock.deps.rateLimit = async () => ({ allowed: false, unavailable: true });
+  const response = await createCheckoutPostHandler(mock.deps)(request(validPayload()));
+  assert.equal(response.status, 503);
+  assert.equal(mock.counts().clientCalls, 0);
+  assert.equal(mock.counts().rpcCalls, 0);
+});
+
+test("returns 429 and Retry-After when the checkout limit is exceeded", async () => {
+  const mock = dependencies();
+  mock.deps.rateLimit = async () => ({ allowed: false, retryAfterSeconds: 37 });
+  const response = await createCheckoutPostHandler(mock.deps)(request(validPayload()));
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get("retry-after"), "37");
+  assert.equal(mock.counts().clientCalls, 0);
+  assert.equal(mock.counts().rpcCalls, 0);
 });
