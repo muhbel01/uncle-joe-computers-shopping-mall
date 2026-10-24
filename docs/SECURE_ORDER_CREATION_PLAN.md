@@ -1,10 +1,10 @@
 # Secure Order Creation — Implementation and Release Status
 
-Last reviewed: 17 October 2026.
+Last reviewed: 24 October 2026.
 
 ## Current status
 
-The checkout form is connected to `POST /api/orders`. The route validates request data with Zod and calls the `create_guest_order` database RPC. The SQL migrations and transaction tests run successfully against a disposable PostgreSQL 16 database in GitHub Actions. The latest verified application CI run also passed type checking, lint, and the production build.
+The checkout form is connected to `POST /api/orders`. The route validates request data with Zod and calls the `create_guest_order` database RPC. The SQL migrations and transaction tests run against a disposable PostgreSQL 17 database in GitHub Actions. At commit `962e2070a7e26ae237941526f917b98ff95459fc`, both CI workflows passed, including type checking, lint, production build, request tests and PostgreSQL integration tests.
 
 **The connected Supabase project has not been migrated for guest checkout, and live order submission is not ready.** The new checkout migration has only been applied to the isolated CI database. The store checkout settings default to disabled. Do not enable checkout or payments until the remaining release gates below have been completed and an authorised store owner has approved launch.
 
@@ -18,7 +18,7 @@ The repository is a reusable store template. It is not evidence of permission to
 - Idempotency for retries using a request key.
 - Fail-closed store settings; checkout, pickup and delivery default to disabled.
 - A reservation-release routine that restores stock and cancels eligible expired unpaid orders.
-- CI integration tests for server-derived totals, duplicate retries, fractional quantities, insufficient stock, inactive products, repeated expiry processing, and disabled checkout.
+- CI integration tests for server-derived totals, duplicate retries, fractional quantities, insufficient stock, inactive and missing products, rollback after forced order-item failure, concurrency/oversell protection, repeated expiry processing, and disabled checkout.
 - Checkout form success/error states and explicit unpaid-order messaging.
 - Customer-facing catalogue search, category/condition filters and sorting.
 
@@ -40,8 +40,8 @@ The repository is a reusable store template. It is not evidence of permission to
 - [ ] Test RPC privileges, RLS, exposed schemas and security advisor findings in the target configuration.
 - [ ] Add rate limiting or an abuse-control strategy for the public order endpoint.
 - [ ] Configure and verify reservation expiry scheduling and failure alerting.
-- [ ] Test concurrent requests for the same idempotency key and competing carts for the final stock unit.
-- [ ] Test rollback after a forced order-item failure and verify no partial order or stock change remains.
+- [x] Test concurrent requests for the same idempotency key and competing carts for the final stock unit in isolated PostgreSQL CI.
+- [x] Test rollback after a forced order-item failure and verify no partial order or stock change remains in isolated PostgreSQL CI.
 - [ ] Test the full customer journey in a browser using a dedicated non-production database and clearly fake fixtures.
 - [ ] Configure payment initiation, server-side verification and idempotent webhook handling before accepting online payments.
 - [ ] Define delivery coverage, delivery fees, pickup instructions, privacy notice, return policy and customer support.

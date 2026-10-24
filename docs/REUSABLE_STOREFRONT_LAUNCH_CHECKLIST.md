@@ -49,14 +49,14 @@ Use this checklist for each retailer deployment. This project is a template, not
 - [ ] Confirm backups, rollback steps and who is responsible for production support.
 - [ ] Obtain final retailer sign-off before announcing the site or accepting real customer information/orders.
 
-## Current project status (23 October 2026)
+## Current project status (24 October 2026)
 
 - Public storefront, product detail, cart and catalogue search/filter/sort are implemented.
 - Checkout form is connected to the order API, but the public checkout UI defaults to disabled.
-- Latest verified commit (`86832d99970970773c029887601deb3b869cba59`) passed GitHub Actions CI: TypeScript type check, lint, production build and checkout integration tests against a disposable PostgreSQL 17 database.
+- Latest verified commit (`962e2070a7e26ae237941526f917b98ff95459fc`) passed both GitHub Actions CI workflows: TypeScript type check, lint, production build, checkout request tests and PostgreSQL 17 integration tests. The latest integration coverage includes missing/inactive product rejection without partial orders.
 - These automated tests do not replace browser end-to-end testing or production security review.
 - The connected Supabase project has not been migrated for guest checkout. Do not accept live orders.
 - No actual inventory has been imported; the catalogue should remain empty until verified stock is provided.
-- A preview deployment for the latest commit is READY: [Vercel deployment](https://vercel.com/muhbel01-5044/uncle-joe-computers-shopping-mall/62pch3JuGjdKrsxfKeDkJ1JvrRzE) and [preview URL](https://uncle-joe-computers-shopping-mall-git-feat-29287d-muhbel01-5044.vercel.app). Automated browser fetch is blocked by Vercel team/project authorization (HTTP 403), so a human browser check is still required. The duplicate `-6kdf` project is failing due to the Vercel deployment-rate limit; do not retry that duplicate project.
+- A previously ready Vercel deployment exists, but it is not verified as containing the latest commit. Preview access is blocked by Vercel team/project authorization (HTTP 403), so a current browser check remains outstanding. Do not treat deployment readiness as proof that the latest code is live. The duplicate `-6kdf` project is failing due to the Vercel deployment-rate limit; do not retry that duplicate project.
 - Payment collection, scheduled reservation release, production end-to-end tests and retailer launch approval remain outstanding.
 - Keep the pull request in draft and do not enable checkout or apply checkout migrations to the connected database until the release gates have been reviewed and explicitly approved.
