@@ -6,7 +6,7 @@ type RpcError = { code?: string } | null;
 
 export type CheckoutRouteDependencies = {
   createClient: () => Promise<{
-    rpc: (name: string, args: { p_payload: CheckoutRequest }) => Promise<{
+    rpc: (name: string, args: { p_payload: CheckoutRequest }) => PromiseLike<{
       data: unknown;
       error: RpcError;
     }>;
