@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 
 export const CHECKOUT_RATE_LIMIT_WINDOW_SECONDS = 60;
 export const CHECKOUT_RATE_LIMIT_MAX_REQUESTS = 5;
@@ -32,7 +33,9 @@ export async function checkCheckoutRateLimit(request: Request): Promise<Checkout
   }
 
   // Use the platform-provided single-IP header; do not trust arbitrary X-Forwarded-For chains.
-  const clientIp = request.headers.get("x-real-ip")?.trim() || "unknown-client-ip";
+  const clientIp = request.headers.get("x-real-ip")?.trim();
+  // Do not put all clients into one shared bucket if the trusted platform IP header is missing or malformed.
+  if (!clientIp || isIP(clientIp) === 0) return { allowed: false, unavailable: true };
   const fingerprint = createHash("sha256").update(clientIp).digest("hex");
   const key = "checkout:rate:" + fingerprint;
 
