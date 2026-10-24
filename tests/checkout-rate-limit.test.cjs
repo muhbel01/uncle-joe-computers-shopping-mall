@@ -96,7 +96,7 @@ test("fails closed when Redis responds with an error", async () => {
   process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";
   global.fetch = async () => new Response("unavailable", { status: 503 });
   try {
-    assert.deepEqual(await checkCheckoutRateLimit(new Request("https://example.test/api/orders")), {
+    assert.deepEqual(await checkCheckoutRateLimit(new Request("https://example.test/api/orders", { headers: { "x-real-ip": "203.0.113.13" } })), {
       allowed: false,
       unavailable: true,
     });
