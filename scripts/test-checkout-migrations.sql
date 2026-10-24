@@ -3,6 +3,21 @@
 
 \set ON_ERROR_STOP on
 
+-- Test-only trigger can force an order-item failure to prove all checkout writes roll back.
+create or replace function pg_temp.fail_order_item_insert_for_test()
+returns trigger language plpgsql as $
+begin
+  if current_setting('test.force_order_item_failure', true) = 'on' then
+    raise exception 'TEST ONLY: forced order-item insert failure' using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$;
+
+create trigger checkout_test_force_order_item_failure
+before insert on public.order_items
+for each row execute function pg_temp.fail_order_item_insert_for_test();
+
 do $$
 declare
   v_product uuid := gen_random_uuid();
@@ -10,6 +25,7 @@ declare
   v_bad_key uuid := gen_random_uuid();
   v_short_key uuid := gen_random_uuid();
   v_disabled_key uuid := gen_random_uuid();
+  v_rollback_key uuid := gen_random_uuid();
   v_paid_key uuid := gen_random_uuid();
   v_first record;
   v_paid record;
@@ -120,6 +136,39 @@ begin
   from public.products where id = v_product;
   if v_stock <> 3 then
     raise exception 'TEST FAILED: expected stock 3 after reservation, got %', v_stock;
+  end if;
+
+  -- A forced failure after the order insert must roll back every checkout write.
+  perform set_config('test.force_order_item_failure', 'on', true);
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_rollback_key::text,
+      'customer', jsonb_build_object('name', 'Rollback Buyer', 'phone', '08012345678', 'email', 'rollback@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_product::text, 'quantity', 1))
+    ));
+  exception when others then
+    v_rejected := true;
+  end;
+  perform set_config('test.force_order_item_failure', 'off', true);
+
+  if not v_rejected then
+    raise exception 'TEST FAILED: forced order-item insert failure did not abort checkout';
+  end if;
+  select stock_quantity into v_stock from public.products where id = v_product;
+  if v_stock <> 3 then
+    raise exception 'TEST FAILED: failed order-item insert changed stock; expected 3, got %', v_stock;
+  end if;
+  if exists (select 1 from public.orders where checkout_request_key = v_rollback_key) then
+    raise exception 'TEST FAILED: failed order-item insert left an order behind';
+  end if;
+  if exists (select 1 from public.inventory_reservations r join public.orders o on o.id = r.order_id where o.checkout_request_key = v_rollback_key) then
+    raise exception 'TEST FAILED: failed order-item insert left a reservation behind';
+  end if;
+  if exists (select 1 from public.inventory_movements where reference in (select order_number from public.orders where checkout_request_key = v_rollback_key)) then
+    raise exception 'TEST FAILED: failed order-item insert left an inventory movement behind';
   end if;
 
   -- Order items must snapshot the verified product data used at checkout.
@@ -320,6 +369,6 @@ begin
     raise exception 'TEST FAILED: checkout succeeded while globally disabled';
   end if;
 
-  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, fractional quantity rejection, insufficient stock rollback, inactive-product rejection, reservation expiry without double restoration, and disabled checkout';
+  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, forced order-item rollback, fractional quantity rejection, insufficient stock rollback, inactive-product rejection, reservation expiry without double restoration, and disabled checkout';
 end
 $$;
