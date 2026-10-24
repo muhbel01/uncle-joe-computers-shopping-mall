@@ -349,6 +349,13 @@ begin
     raise exception 'TEST FAILED: paid-order stock reservation was not preserved, stock is %', v_stock;
   end if;
 
+  if not exists (
+    select 1 from public.orders
+    where id = v_paid.order_id and order_status = 'pending' and payment_status = 'paid'
+  ) then
+    raise exception 'TEST FAILED: expiry routine changed the status of a paid order';
+  end if;
+
   update public.checkout_settings
   set guest_checkout_enabled = false
   where id = true;
@@ -369,6 +376,6 @@ begin
     raise exception 'TEST FAILED: checkout succeeded while globally disabled';
   end if;
 
-  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, forced order-item rollback, fractional quantity rejection, insufficient stock rollback, inactive-product rejection, reservation expiry without double restoration, and disabled checkout';
+  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, forced order-item rollback, fractional quantity rejection, insufficient stock rollback, inactive-product rejection, reservation expiry without double restoration, paid-order status preservation, and disabled checkout';
 end
 $$;

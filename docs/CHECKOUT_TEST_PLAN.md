@@ -21,6 +21,7 @@ Last reviewed: 23 October 2026.
 - [x] Inactive products are rejected.
 - [x] Expired unpaid reservations restore stock and cancel the pending order.
 - [x] A repeated expiry pass does not restore stock twice.
+- [x] Expiry leaves a paid order's payment and order statuses unchanged.
 - [x] Checkout is rejected while guest checkout is disabled.
 - [x] Insufficient-stock checkout leaves no order behind.
 - [x] Order-item snapshots preserve product name, SKU, condition, unit price, line total and warranty.
@@ -45,7 +46,7 @@ These tests exercise the request parsing helper and schema directly, not the ful
 
 - [ ] Concurrent requests using the same request key create only one order.
 - [ ] Concurrent carts competing for the last unit cannot oversell.
-- [ ] A forced order-item insert failure rolls back the order and stock changes.
+- [x] A forced order-item insert failure rolls back the order, stock changes, reservations and inventory movement (isolated PostgreSQL integration test).
 - [ ] Missing and inactive products create no partial order.
 - [ ] Paid or non-pending orders are never cancelled/released by reservation expiry.
 - [ ] Anonymous clients cannot read or modify other orders, payment attempts, checkout settings or reservation rows.
