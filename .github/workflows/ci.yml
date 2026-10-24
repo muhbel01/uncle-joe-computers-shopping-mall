@@ -86,3 +86,5 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261017120000_atomic_guest_order_creation.sql
       - name: Test checkout transactions and stock safety
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/test-checkout-migrations.sql
+      - name: Test concurrent checkout and oversell protection
+        run: bash scripts/test-checkout-concurrency.sh
