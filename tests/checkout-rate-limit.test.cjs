@@ -20,10 +20,28 @@ test("fails closed when shared limiter credentials are missing", async () => {
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
   global.fetch = async () => { throw new Error("fetch should not be called"); };
   try {
-    assert.deepEqual(await checkCheckoutRateLimit(new Request("https://example.test/api/orders")), {
+    assert.deepEqual(await checkCheckoutRateLimit(new Request("https://example.test/api/orders", { headers: { "x-real-ip": "203.0.113.12" } })), {
       allowed: false,
       unavailable: true,
     });
+  } finally {
+    restoreEnvironment();
+  }
+});
+
+test("fails closed when the trusted client IP header is missing or malformed", async () => {
+  process.env.UPSTASH_REDIS_REST_URL = "https://redis.example.test";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";
+  let fetchCalled = false;
+  global.fetch = async () => { fetchCalled = true; throw new Error("fetch should not be called"); };
+  try {
+    for (const headers of [{}, { "x-real-ip": "not-an-ip" }]) {
+      assert.deepEqual(await checkCheckoutRateLimit(new Request("https://example.test/api/orders", { headers })), {
+        allowed: false,
+        unavailable: true,
+      });
+    }
+    assert.equal(fetchCalled, false);
   } finally {
     restoreEnvironment();
   }
@@ -64,7 +82,7 @@ test("returns retry duration after the shared request limit is exceeded", async 
     status: 200, headers: { "content-type": "application/json" },
   });
   try {
-    assert.deepEqual(await checkCheckoutRateLimit(new Request("https://example.test/api/orders")), {
+    assert.deepEqual(await checkCheckoutRateLimit(new Request("https://example.test/api/orders", { headers: { "x-real-ip": "203.0.113.11" } })), {
       allowed: false,
       retryAfterSeconds: 23,
     });
