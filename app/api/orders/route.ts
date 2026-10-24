@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { checkoutRequestSchema } from "@/lib/checkout-schema";
 import { readCheckoutJson } from "@/lib/checkout-http";
+import { checkoutRpcErrorResponse, checkoutSuccessResponse } from "@/lib/checkout-api";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
-
-const genericFailure = "We couldn't place your order. Please review your details and try again.";
 
 export async function POST(request: Request) {
   const readResult = await readCheckoutJson(request);
@@ -33,46 +32,25 @@ export async function POST(request: Request) {
         code: error.code,
         requestKey: parsed.data.requestKey,
       });
-
-      if (error.code === "P0001" || error.code === "P0002") {
-        return NextResponse.json({
-          error: "A product in your cart is unavailable or no longer has enough stock. Please return to your cart and review it.",
-        }, { status: 409 });
-      }
-
-      if (error.code === "22023") {
-        return NextResponse.json({ error: "Please check your checkout details and try again." }, { status: 400 });
-      }
-
-      if (error.code === "55000") {
-        return NextResponse.json({
-          error: "Online checkout is not enabled for this store yet. Please contact the store before placing an order.",
-        }, { status: 503 });
-      }
-
-      return NextResponse.json({ error: genericFailure }, { status: 500 });
+      const mapped = checkoutRpcErrorResponse(error.code);
+      return NextResponse.json(mapped.body, { status: mapped.status });
     }
 
     const order = Array.isArray(data) ? data[0] : data;
-    if (!order?.order_id || !order?.order_number || order?.order_total == null) {
+    const response = checkoutSuccessResponse(order, parsed.data.fulfilmentMethod);
+    if (!response) {
       console.error("Guest checkout returned an unexpected response", {
         requestKey: parsed.data.requestKey,
       });
-      return NextResponse.json({ error: genericFailure }, { status: 500 });
+      return NextResponse.json({
+        error: "We couldn't place your order. Please review your details and try again.",
+      }, { status: 500 });
     }
 
-    return NextResponse.json({
-      order: {
-        id: order.order_id,
-        number: order.order_number,
-        total: Number(order.order_total),
-        currency: order.currency ?? "NGN",
-        paymentStatus: "unpaid",
-        fulfilmentMethod: parsed.data.fulfilmentMethod,
-      },
-      message: "Your order has been created. Payment has not been taken.",
-    }, { status: 201 });
+    return NextResponse.json(response, { status: 201 });
   } catch {
-    return NextResponse.json({ error: genericFailure }, { status: 500 });
+    return NextResponse.json({
+      error: "We couldn't place your order. Please review your details and try again.",
+    }, { status: 500 });
   }
 }

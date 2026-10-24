@@ -38,8 +38,9 @@ These tests exercise the request parsing helper and schema directly, not the ful
 
 ## Additional application/API validation
 
-- [ ] Full route tests cover invalid customer fields and response JSON.
-- [ ] User-visible API errors remain helpful without exposing database internals.
+- [ ] Full Next.js route tests cover invalid customer fields and response JSON.
+- [x] Extracted API response tests verify safe error mapping and valid unpaid-order response formatting.
+- [x] Unknown database errors are mapped to a generic response without exposing internal error details.
 - [ ] Rate limiting and abuse controls are implemented and tested.
 
 ## Database and security tests still required
