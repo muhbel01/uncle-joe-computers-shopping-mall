@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type StoredImage = { id: string; storage_path: string; alt_text: string | null; url: string };
 
-export function ProductImageManager({ productId, productName }: { productId: string; productName: string }) {
+export function ProductImageManager({ productId, productName, canManage = true }: { productId: string; productName: string; canManage?: boolean }) {
   const [images, setImages] = useState<StoredImage[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -114,10 +114,10 @@ export function ProductImageManager({ productId, productName }: { productId: str
               <button type="button" onClick={() => void removeImage(item)} disabled={busy} aria-label={"Remove image for " + productName}>Remove</button>
             </div>
           ))}</div>}
-          <form action={uploadImage} className="image-upload-form">
+          {canManage && <form action={uploadImage} className="image-upload-form">
             <label>Add JPG, PNG or WebP (max 5 MB)<input type="file" name="image" accept="image/jpeg,image/png,image/webp" required disabled={busy} /></label>
             <button type="submit" disabled={busy}>{busy ? "Working…" : "Upload image"}</button>
-          </form>
+          </form>}
           {message && <p className="image-manager-success" role="status">{message}</p>}
           {error && <p className="image-manager-error" role="alert">{error}</p>}
         </div>

@@ -108,6 +108,8 @@ export async function importProductsCsv(formData: FormData) {
     // Reject rows with missing or extra cells instead of silently dropping or misaligning data.
     if (rows[index].length !== headers.length) { skipped++; continue; }
     const raw = Object.fromEntries(headers.map((header, col) => [header, rows[index][col]]));
+    // Required numeric cells must not be blank: Number("") and z.coerce.number() can turn blanks into zero.
+    if (!raw.price_ngn?.trim() || !raw.opening_stock?.trim()) { skipped++; continue; }
     const parsed = rowSchema.safeParse(raw);
     if (!parsed.success) { skipped++; continue; }
     const value = parsed.data;

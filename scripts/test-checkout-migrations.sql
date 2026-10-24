@@ -1,0 +1,406 @@
+-- Ephemeral PostgreSQL integration tests for the guest checkout migrations.
+-- Uses synthetic records only. Run after all repository migrations on a disposable database.
+
+\set ON_ERROR_STOP on
+
+-- Test-only trigger can force an order-item failure to prove all checkout writes roll back.
+create or replace function pg_temp.fail_order_item_insert_for_test()
+returns trigger language plpgsql as $rollback_test$
+begin
+  if current_setting('test.force_order_item_failure', true) = 'on' then
+    raise exception 'TEST ONLY: forced order-item insert failure' using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$rollback_test$;
+
+create trigger checkout_test_force_order_item_failure
+before insert on public.order_items
+for each row execute function pg_temp.fail_order_item_insert_for_test();
+
+do $$
+declare
+  v_product uuid := gen_random_uuid();
+  v_key uuid := gen_random_uuid();
+  v_bad_key uuid := gen_random_uuid();
+  v_short_key uuid := gen_random_uuid();
+  v_disabled_key uuid := gen_random_uuid();
+  v_rollback_key uuid := gen_random_uuid();
+  v_paid_key uuid := gen_random_uuid();
+  v_missing_key uuid := gen_random_uuid();
+  v_missing_product uuid := gen_random_uuid();
+  v_first record;
+  v_paid record;
+  v_retry record;
+  v_stock integer;
+  v_order_count integer;
+  v_released integer;
+  v_rejected boolean;
+begin
+  -- Verify the browser-facing role grants after migrations are applied.
+  if not has_function_privilege('anon', 'public.create_guest_order(jsonb)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.create_guest_order(jsonb)', 'EXECUTE') then
+    raise exception 'TEST FAILED: public guest-order RPC is not executable by browser roles';
+  end if;
+
+  if has_function_privilege('anon', 'private.create_guest_order(jsonb)', 'EXECUTE')
+     or has_function_privilege('authenticated', 'private.create_guest_order(jsonb)', 'EXECUTE') then
+    raise exception 'TEST FAILED: browser role can execute the private guest-order function';
+  end if;
+
+  if has_function_privilege('anon', 'private.release_expired_inventory_reservations(integer)', 'EXECUTE')
+     or has_function_privilege('authenticated', 'private.release_expired_inventory_reservations(integer)', 'EXECUTE') then
+    raise exception 'TEST FAILED: browser role can execute the private reservation-release function';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'create_guest_order'
+      and p.prosecdef
+      and 'search_path=""' = any(p.proconfig)
+  ) then
+    raise exception 'TEST FAILED: public guest-order RPC must be SECURITY DEFINER with an empty search_path';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'private'
+      and p.proname = 'create_guest_order'
+      and p.prosecdef
+      and 'search_path=""' = any(p.proconfig)
+  ) then
+    raise exception 'TEST FAILED: private guest-order function must be SECURITY DEFINER with an empty search_path';
+  end if;
+
+  if has_table_privilege('anon', 'public.checkout_settings', 'SELECT')
+     or has_table_privilege('anon', 'public.checkout_settings', 'INSERT')
+     or has_table_privilege('anon', 'public.checkout_settings', 'UPDATE')
+     or has_table_privilege('anon', 'public.checkout_settings', 'DELETE')
+     or has_table_privilege('authenticated', 'public.checkout_settings', 'SELECT')
+     or has_table_privilege('authenticated', 'public.checkout_settings', 'INSERT')
+     or has_table_privilege('authenticated', 'public.checkout_settings', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.checkout_settings', 'DELETE') then
+    raise exception 'TEST FAILED: browser role has direct privileges on checkout settings';
+  end if;
+
+  if has_table_privilege('anon', 'public.inventory_reservations', 'SELECT')
+     or has_table_privilege('anon', 'public.inventory_reservations', 'INSERT')
+     or has_table_privilege('anon', 'public.inventory_reservations', 'UPDATE')
+     or has_table_privilege('anon', 'public.inventory_reservations', 'DELETE')
+     or has_table_privilege('authenticated', 'public.inventory_reservations', 'SELECT')
+     or has_table_privilege('authenticated', 'public.inventory_reservations', 'INSERT')
+     or has_table_privilege('authenticated', 'public.inventory_reservations', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.inventory_reservations', 'DELETE') then
+    raise exception 'TEST FAILED: browser role has direct privileges on inventory reservations';
+  end if;
+
+  insert into public.products (
+    id, name, slug, sku, condition, price, stock_quantity, is_active
+  ) values (
+    v_product, 'Integration Test Laptop', 'integration-test-laptop',
+    'TEST-LAPTOP-001', 'new', 1250, 5, true
+  );
+
+  update public.checkout_settings
+  set guest_checkout_enabled = true,
+      pickup_enabled = true,
+      delivery_enabled = false,
+      default_delivery_fee = null
+  where id = true;
+
+  select * into v_first
+  from public.create_guest_order(jsonb_build_object(
+    'requestKey', v_key::text,
+    'customer', jsonb_build_object(
+      'name', 'Test Buyer',
+      'phone', '08012345678',
+      'email', 'buyer@example.com'
+    ),
+    'fulfilmentMethod', 'pickup',
+    'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+    'customerNote', 'Automated integration test',
+    'items', jsonb_build_array(jsonb_build_object(
+      'productId', v_product::text, 'quantity', 2
+    ))
+  ));
+
+  if v_first.order_id is null or v_first.order_number is null
+     or v_first.order_total <> 2500 or v_first.currency <> 'NGN' then
+    raise exception 'TEST FAILED: valid order returned unexpected values';
+  end if;
+
+  select stock_quantity into v_stock
+  from public.products where id = v_product;
+  if v_stock <> 3 then
+    raise exception 'TEST FAILED: expected stock 3 after reservation, got %', v_stock;
+  end if;
+
+  -- A forced failure after the order insert must roll back every checkout write.
+  perform set_config('test.force_order_item_failure', 'on', true);
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_rollback_key::text,
+      'customer', jsonb_build_object('name', 'Rollback Buyer', 'phone', '08012345678', 'email', 'rollback@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_product::text, 'quantity', 1))
+    ));
+  exception when others then
+    v_rejected := true;
+  end;
+  perform set_config('test.force_order_item_failure', 'off', true);
+
+  if not v_rejected then
+    raise exception 'TEST FAILED: forced order-item insert failure did not abort checkout';
+  end if;
+  select stock_quantity into v_stock from public.products where id = v_product;
+  if v_stock <> 3 then
+    raise exception 'TEST FAILED: failed order-item insert changed stock; expected 3, got %', v_stock;
+  end if;
+  if exists (select 1 from public.orders where checkout_request_key = v_rollback_key) then
+    raise exception 'TEST FAILED: failed order-item insert left an order behind';
+  end if;
+  if exists (select 1 from public.inventory_reservations r join public.orders o on o.id = r.order_id where o.checkout_request_key = v_rollback_key) then
+    raise exception 'TEST FAILED: failed order-item insert left a reservation behind';
+  end if;
+  if exists (select 1 from public.inventory_movements where reference in (select order_number from public.orders where checkout_request_key = v_rollback_key)) then
+    raise exception 'TEST FAILED: failed order-item insert left an inventory movement behind';
+  end if;
+
+  -- Order items must snapshot the verified product data used at checkout.
+  if not exists (
+    select 1
+    from public.order_items oi
+    join public.products p on p.id = oi.product_id
+    where oi.order_id = v_first.order_id
+      and oi.product_name = p.name
+      and oi.sku is not distinct from p.sku
+      and oi.condition = p.condition
+      and oi.unit_price = p.price
+      and oi.line_total = p.price * 2
+      and oi.warranty_snapshot is not distinct from p.warranty_description
+  ) then
+    raise exception 'TEST FAILED: order item snapshot does not match verified product details';
+  end if;
+
+  select * into v_retry
+  from public.create_guest_order(jsonb_build_object(
+    'requestKey', v_key::text,
+    'customer', jsonb_build_object(
+      'name', 'Test Buyer',
+      'phone', '08012345678',
+      'email', 'buyer@example.com'
+    ),
+    'fulfilmentMethod', 'pickup',
+    'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+    'customerNote', 'Automated integration test retry',
+    'items', jsonb_build_array(jsonb_build_object(
+      'productId', v_product::text, 'quantity', 2
+    ))
+  ));
+
+  if v_retry.order_id <> v_first.order_id then
+    raise exception 'TEST FAILED: idempotent retry returned a different order';
+  end if;
+
+  select stock_quantity into v_stock
+  from public.products where id = v_product;
+  if v_stock <> 3 then
+    raise exception 'TEST FAILED: idempotent retry changed stock';
+  end if;
+
+  select count(*) into v_order_count
+  from public.orders where checkout_request_key = v_key;
+  if v_order_count <> 1 then
+    raise exception 'TEST FAILED: idempotent retry created % orders', v_order_count;
+  end if;
+
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_bad_key::text,
+      'customer', jsonb_build_object('name', 'Test Buyer', 'phone', '08012345678', 'email', 'buyer@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_product::text, 'quantity', 1.5))
+    ));
+  exception when sqlstate '22023' then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'TEST FAILED: fractional quantity was not rejected';
+  end if;
+
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_short_key::text,
+      'customer', jsonb_build_object('name', 'Test Buyer', 'phone', '08012345678', 'email', 'buyer@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_product::text, 'quantity', 50))
+    ));
+  exception when sqlstate 'P0001' then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'TEST FAILED: insufficient stock was not rejected';
+  end if;
+
+  select stock_quantity into v_stock
+  from public.products where id = v_product;
+  if v_stock <> 3 then
+    raise exception 'TEST FAILED: rejected order changed stock';
+  end if;
+
+  if exists (
+    select 1 from public.orders where checkout_request_key = v_short_key
+  ) then
+    raise exception 'TEST FAILED: rejected checkout left a partial order behind';
+  end if;
+
+  -- Inactive products must not be purchasable, even when stock exists.
+  update public.products set is_active = false where id = v_product;
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_short_key::text,
+      'customer', jsonb_build_object('name', 'Test Buyer', 'phone', '08012345678', 'email', 'buyer@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_product::text, 'quantity', 1))
+    ));
+  exception when sqlstate 'P0002' then
+    v_rejected := true;
+  end;
+  update public.products set is_active = true where id = v_product;
+  if not v_rejected then
+    raise exception 'TEST FAILED: inactive product was purchasable';
+  end if;
+  if exists (select 1 from public.orders where checkout_request_key = v_short_key) then
+    raise exception 'TEST FAILED: inactive-product checkout left a partial order behind';
+  end if;
+
+  -- A well-formed but nonexistent product UUID must fail atomically as unavailable.
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_missing_key::text,
+      'customer', jsonb_build_object('name', 'Missing Product Buyer', 'phone', '08012345678', 'email', 'missing@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_missing_product::text, 'quantity', 1))
+    ));
+  exception when sqlstate 'P0002' then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'TEST FAILED: nonexistent product was purchasable';
+  end if;
+  if exists (select 1 from public.orders where checkout_request_key = v_missing_key) then
+    raise exception 'TEST FAILED: nonexistent-product checkout left a partial order behind';
+  end if;
+
+  update public.inventory_reservations
+  set expires_at = now() - interval '1 minute'
+  where order_id = v_first.order_id and status = 'reserved';
+
+  select private.release_expired_inventory_reservations(100) into v_released;
+  if v_released <> 1 then
+    raise exception 'TEST FAILED: expected one expired reservation released, got %', v_released;
+  end if;
+
+  select stock_quantity into v_stock
+  from public.products where id = v_product;
+  if v_stock <> 5 then
+    raise exception 'TEST FAILED: stock was not restored after reservation expiry';
+  end if;
+
+  if not exists (
+    select 1 from public.orders
+    where id = v_first.order_id and order_status = 'cancelled'
+  ) then
+    raise exception 'TEST FAILED: expired unpaid order was not cancelled';
+  end if;
+
+  -- Running the release routine again must not restore the same stock twice.
+  select private.release_expired_inventory_reservations(100) into v_released;
+  if v_released <> 0 then
+    raise exception 'TEST FAILED: second expiry pass released % reservations', v_released;
+  end if;
+  select stock_quantity into v_stock from public.products where id = v_product;
+  if v_stock <> 5 then
+    raise exception 'TEST FAILED: repeated expiry pass changed stock to %', v_stock;
+  end if;
+
+  -- A paid order must never have its stock reservation released by expiry.
+  select * into v_paid
+  from public.create_guest_order(jsonb_build_object(
+    'requestKey', v_paid_key::text,
+    'customer', jsonb_build_object(
+      'name', 'Paid Test Buyer',
+      'phone', '08012345678',
+      'email', 'paid-buyer@example.com'
+    ),
+    'fulfilmentMethod', 'pickup',
+    'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+    'customerNote', 'Paid-order reservation guard test',
+    'items', jsonb_build_array(jsonb_build_object(
+      'productId', v_product::text, 'quantity', 1
+    ))
+  ));
+
+  update public.orders
+  set payment_status = 'paid'
+  where id = v_paid.order_id;
+
+  update public.inventory_reservations
+  set expires_at = now() - interval '1 minute'
+  where order_id = v_paid.order_id and status = 'reserved';
+
+  select private.release_expired_inventory_reservations(100) into v_released;
+  if v_released <> 0 then
+    raise exception 'TEST FAILED: expired reservation for paid order was released';
+  end if;
+
+  select stock_quantity into v_stock from public.products where id = v_product;
+  if v_stock <> 4 then
+    raise exception 'TEST FAILED: paid-order stock reservation was not preserved, stock is %', v_stock;
+  end if;
+
+  if not exists (
+    select 1 from public.orders
+    where id = v_paid.order_id and order_status = 'pending' and payment_status = 'paid'
+  ) then
+    raise exception 'TEST FAILED: expiry routine changed the status of a paid order';
+  end if;
+
+  update public.checkout_settings
+  set guest_checkout_enabled = false
+  where id = true;
+
+  v_rejected := false;
+  begin
+    perform * from public.create_guest_order(jsonb_build_object(
+      'requestKey', v_disabled_key::text,
+      'customer', jsonb_build_object('name', 'Test Buyer', 'phone', '08012345678', 'email', 'buyer@example.com'),
+      'fulfilmentMethod', 'pickup',
+      'deliveryAddress', jsonb_build_object('address', '', 'city', '', 'state', ''),
+      'items', jsonb_build_array(jsonb_build_object('productId', v_product::text, 'quantity', 1))
+    ));
+  exception when sqlstate '55000' then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'TEST FAILED: checkout succeeded while globally disabled';
+  end if;
+
+  raise notice 'PASS: migration execution, valid order, server-side totals, idempotency, forced order-item rollback, fractional quantity rejection, insufficient stock rollback, inactive and missing-product rejection without partial orders, reservation expiry without double restoration, paid-order status preservation, and disabled checkout';
+end
+$$;
