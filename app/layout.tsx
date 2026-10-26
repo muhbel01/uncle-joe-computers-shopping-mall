@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { storeConfig } from "@/lib/store-config";
 import { CartProvider } from "@/components/cart-provider";
 import "./globals.css";
+import "./demo-refresh.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(storeConfig.siteUrl),
