@@ -118,7 +118,7 @@ export default async function HomePage() {
         <div className="container hero-grid">
           <div className="hero-copy">
             <span className="eyebrow">YOUR TRUSTED TECH STORE</span>
-            <h1>Technology for work, life and everything in between.</h1>
+            <h1>Uncle Joe Computers <span>Shopping Mall</span></h1>
             <p>Shop computers, phones, accessories, networking equipment and power solutions — with helpful support from our team.</p>
             <div className="hero-actions"><a className="button primary" href="#categories">Explore categories</a><a className="button secondary" href="#contact">Contact information</a></div>
             <div className="trust-row"><span>✓ New and used options</span><span>✓ Delivery options on enquiry</span><span>✓ Customer support planned</span></div>
