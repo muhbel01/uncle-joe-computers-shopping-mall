@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 
+// Do not bake a retailer-specific production domain into this reusable template.
 const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://uncle-joe-computers-shopping-mall-6.vercel.app"
+  "http://localhost:3000"
 ).replace(/\/$/, "");
 
 export default function robots(): MetadataRoute.Robots {

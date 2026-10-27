@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/reusable-store-branding]
   pull_request:
     branches: [main]
 
@@ -22,6 +22,12 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
+      - name: Run checkout request tests
+        run: |
+          rm -rf .test-build
+          npx tsc lib/checkout-schema.ts lib/checkout-http.ts lib/checkout-api.ts lib/checkout-rate-limit.ts lib/checkout-route.ts --target ES2020 --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --strict --outDir .test-build
+          node --test tests/checkout-schema.test.cjs tests/checkout-http.test.cjs tests/checkout-api.test.cjs tests/checkout-rate-limit.test.cjs tests/checkout-route.test.cjs
+          rm -rf .test-build
       - name: Type check
         run: npm run typecheck
       - name: Lint
@@ -32,3 +38,53 @@ jobs:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+
+  checkout-postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Prepare isolated Supabase-compatible test database
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE SCHEMA auth;
+          CREATE SCHEMA extensions;
+          CREATE TABLE auth.users (id uuid PRIMARY KEY);
+          CREATE FUNCTION auth.uid()
+          RETURNS uuid
+          LANGUAGE sql
+          STABLE
+          AS $$ SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+          CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+          SQL
+      - name: Apply repository migrations to disposable PostgreSQL 17
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/202610090001_initial_schema.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261017090000_checkout_idempotency_and_fulfilment.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261017120000_atomic_guest_order_creation.sql
+      - name: Test checkout transactions and stock safety
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/test-checkout-migrations.sql
+      - name: Test concurrent checkout and oversell protection
+        run: bash scripts/test-checkout-concurrency.sh

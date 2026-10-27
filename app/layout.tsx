@@ -1,32 +1,28 @@
 import type { Metadata } from "next";
+import { storeConfig } from "@/lib/store-config";
+import { CartProvider } from "@/components/cart-provider";
 import "./globals.css";
-
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  "https://uncle-joe-computers-shopping-mall-6.vercel.app";
+import "./demo-refresh.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(storeConfig.siteUrl),
   title: {
-    default: "Uncle Joe Computers Shopping Mall",
-    template: "%s | Uncle Joe Computers",
+    default: storeConfig.name,
+    template: `%s | ${storeConfig.shortName}`,
   },
-  description:
-    "Shop computers, laptops, phones, accessories, networking and power products from Uncle Joe Computers Shopping Mall in Osogbo, Nigeria.",
-  applicationName: "Uncle Joe Computers Shopping Mall",
+  description: storeConfig.description,
+  applicationName: storeConfig.name,
   openGraph: {
     type: "website",
-    locale: "en_NG",
-    siteName: "Uncle Joe Computers Shopping Mall",
-    title: "Uncle Joe Computers Shopping Mall",
-    description:
-      "Computers, laptops, phones, accessories, networking and power products in Osogbo, Nigeria.",
+    locale: storeConfig.locale,
+    siteName: storeConfig.name,
+    title: storeConfig.name,
+    description: storeConfig.description,
   },
   twitter: {
     card: "summary",
-    title: "Uncle Joe Computers Shopping Mall",
-    description:
-      "Computers, laptops, phones, accessories, networking and power products in Osogbo, Nigeria.",
+    title: storeConfig.name,
+    description: storeConfig.description,
   },
 };
 
@@ -34,8 +30,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-NG">
-      <body>{children}</body>
+    <html lang={storeConfig.language}>
+      <body><CartProvider>{children}</CartProvider></body>
     </html>
   );
 }

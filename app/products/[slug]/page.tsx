@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicSupabaseClient } from "@/lib/supabase/public";
+import { storeConfig } from "@/lib/store-config";
+import { AddToCart } from "@/components/add-to-cart";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -22,14 +24,19 @@ type ProductDetail = {
   images?: { storage_path: string; alt_text: string | null; sort_order: number }[];
 };
 
-const naira = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 });
+const naira = new Intl.NumberFormat("en-NG", { style: "currency", currency: storeConfig.currency, maximumFractionDigits: 0 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const supabase = getPublicSupabaseClient();
   if (!supabase) return { title: "Product details" };
-  const { data } = await supabase.from("products").select("name,short_description").eq("slug", slug).eq("is_active", true).maybeSingle();
-  return { title: data?.name ?? "Product details", description: data?.short_description ?? "Product details from Uncle Joe Computers Shopping Mall." };
+  try {
+    const { data, error } = await supabase.from("products").select("name,short_description").eq("slug", slug).eq("is_active", true).maybeSingle();
+    if (error) return { title: "Product details" };
+    return { title: data?.name ?? "Product details", description: data?.short_description ?? `Product details from ${storeConfig.name}.` };
+  } catch {
+    return { title: "Product details" };
+  }
 }
 
 export const revalidate = 60;
@@ -42,15 +49,34 @@ export default async function ProductDetailPage({ params }: Props) {
     return <main className="page-shell"><div className="container page-heading"><Link className="back-link" href="/products">← All products</Link><h1>Product catalogue is being connected</h1><p>Please check back soon.</p></div></main>;
   }
 
-  const { data } = await supabase
-    .from("products")
-    .select("id,name,slug,brand,condition,price,stock_quantity,short_description,description,warranty_description,return_eligible,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
+  let data: unknown = null;
+  let catalogueUnavailable = false;
+  try {
+    const result = await supabase
+      .from("products")
+      .select("id,name,slug,brand,condition,price,stock_quantity,short_description,description,warranty_description,return_eligible,category:categories(name,slug),images:product_images(storage_path,alt_text,sort_order)")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .maybeSingle();
+    data = result.data;
+    catalogueUnavailable = Boolean(result.error);
+  } catch {
+    catalogueUnavailable = true;
+  }
 
+  if (catalogueUnavailable) {
+    return (
+      <main className="page-shell">
+        <div className="container page-heading">
+          <Link className="back-link" href="/products">← All products</Link>
+          <h1>Product temporarily unavailable</h1>
+          <p>We couldn’t load this product right now. Please try again shortly.</p>
+        </div>
+      </main>
+    );
+  }
   if (!data) notFound();
-  const product = data as unknown as ProductDetail;
+  const product = data as ProductDetail;
   const firstImage = [...(product.images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0];
   const imageUrl = firstImage ? supabase.storage.from("product-images").getPublicUrl(firstImage.storage_path).data.publicUrl : null;
 
@@ -59,7 +85,7 @@ export default async function ProductDetailPage({ params }: Props) {
       <div className="container product-detail">
         <Link className="back-link" href={product.category?.slug ? `/category/${product.category.slug}` : "/products"}>← Back to {product.category?.name ?? "products"}</Link>
         <div className="product-detail-grid">
-          {imageUrl ? <div className="product-detail-art product-detail-photo"><Image src={imageUrl} alt={firstImage?.alt_text || product.name} width={720} height={600} unoptimized /></div> : <div className="product-detail-art" aria-hidden="true"><span>UJ</span><small>UNCLE JOE COMPUTERS</small></div>}
+          {imageUrl ? <div className="product-detail-art product-detail-photo"><Image src={imageUrl} alt={firstImage?.alt_text || product.name} width={720} height={600} unoptimized /></div> : <div className="product-detail-art" aria-hidden="true"><span>{storeConfig.shortName.slice(0, 2).toUpperCase()}</span><small>{storeConfig.shortName}</small></div>}
           <section className="product-detail-copy">
             {product.category?.name && <span className="eyebrow">{product.category.name}</span>}
             <h1>{product.name}</h1>
@@ -69,7 +95,8 @@ export default async function ProductDetailPage({ params }: Props) {
             <p className={product.stock_quantity > 0 ? "stock available" : "stock unavailable"}>{product.stock_quantity > 0 ? "In stock — contact us to confirm availability" : "Currently unavailable"}</p>
             {product.warranty_description && <p><strong>Warranty:</strong> {product.warranty_description}</p>}
             <p><strong>Returns:</strong> {product.return_eligible ? "Eligible for return under the shop’s return conditions." : "This item is not currently marked as return-eligible."}</p>
-            <Link className="button primary" href="/#contact">Ask about this product</Link>
+            <AddToCart product={{ id: product.id, slug: product.slug, name: product.name, price: product.price, condition: product.condition, stockQuantity: product.stock_quantity, imageUrl }} />
+            <Link className="button secondary" href="/#contact">Ask about this product</Link>
             <small className="detail-note">Online checkout is not active yet. Please confirm stock and final details with the shop before paying.</small>
           </section>
         </div>
