@@ -50,3 +50,27 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,
 .button:hover{transform:translateY(-1px);box-shadow:0 8px 18px #3155e726}
 @media(max-width:980px){.category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.hero-grid{padding-block:32px 24px}.hero h1{font-size:clamp(36px,9vw,46px)}.hero-copy>p{font-size:14px}.hero-art{border-radius:24px;min-height:250px}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.category-card{min-height:145px}.section{padding-block:42px}.nav-inner{gap:18px}}
+
+
+/* Selected homepage concept: bold blue technology storefront, clear and presentation-ready */
+.hero{background:radial-gradient(ellipse at 65% 35%,#168cf2 0%,#0755b8 36%,#10245c 76%,#0c1740 100%);color:#fff;overflow:hidden}
+.hero-grid{min-height:420px;gap:34px}
+.hero .eyebrow{background:#ffffff1b;color:#dceaff;border:1px solid #ffffff2b;box-shadow:none;letter-spacing:.04em}
+.hero h1{color:#fff;max-width:590px}
+.hero h1 span{color:#ffd83d}
+.hero-copy>p{color:#e4edff}
+.hero .button.primary{background:#ffd43b;color:#14234e;border:1px solid #ffe16c}
+.hero .button.primary:hover{background:#ffe36d}
+.hero .button.secondary{background:#ffffff0c;color:#fff;border:1px solid #dbe8ff}
+.hero .trust-row{color:#e7efff}
+.hero .trust-row span{background:#ffffff12;border:1px solid #ffffff22}
+.hero-art{background:radial-gradient(circle at 50% 25%,#269dff 0%,#155bd0 40%,#14245e 100%);border:1px solid #ffffff26;box-shadow:0 22px 55px #07143e55;min-height:330px}
+.glow{background:radial-gradient(circle,#69d4ff 0%,#398cff 35%,transparent 73%);opacity:.8}
+.laptop-screen{background:linear-gradient(135deg,#0b1739,#1479e8 58%,#40c9ff);border-color:#101a37}
+.phone-screen{background:linear-gradient(150deg,#bcecff,#4a9fff 52%,#5c4de8);color:#10234d}
+.floating-card{background:#fff;color:#17336c;border-color:#b8ddff}
+.floating-chip{background:#e6f3ff;color:#153d84;border-color:#b9d9ff}
+.benefit-grid>div>span{background:#e5f1ff}
+.section-heading .eyebrow{color:#245de0}
+.membership-band{background:linear-gradient(105deg,#3021d8,#3155e7 60%,#188cf3)}
+@media(max-width:760px){.hero-grid{min-height:0;gap:20px}.hero-art{min-height:245px}}
